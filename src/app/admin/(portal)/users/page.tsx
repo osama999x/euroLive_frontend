@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,42 +13,75 @@ import { EmptyState, LoadingBlock, PageHeader } from "@/components/ui/page";
 import { useToast } from "@/components/ui/toast";
 import { adminApi } from "@/lib/api/admin";
 import type { ConsumerUser, PaginationMeta, UserStatus } from "@/lib/api/types";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
-export default function AdminUsersPage() {
+function UsersList() {
   const { error } = useToast();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const refreshToken = searchParams.get("r") ?? "";
+  const highlight = searchParams.get("highlight") ?? "";
+
   const [items, setItems] = useState<ConsumerUser[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<UserStatus | "">("");
   const [loading, setLoading] = useState(true);
+  const [focusTick, setFocusTick] = useState(0);
 
   useEffect(() => {
+    const bump = () => setFocusTick((t) => t + 1);
+    const onVis = () => {
+      if (document.visibilityState === "visible") bump();
+    };
+    window.addEventListener("focus", bump);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", bump);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
+  const load = useCallback(async () => {
     setLoading(true);
-    adminApi
-      .listUsers({ page, limit: 20, search, status })
-      .then((res) => {
-        setItems(res.items);
-        setMeta(res.meta);
-      })
-      .catch((err) => error(err))
-      .finally(() => setLoading(false));
+    try {
+      const res = await adminApi.listUsers({ page, limit: 20, search, status });
+      setItems(res.items);
+      setMeta(res.meta);
+    } catch (err) {
+      error(err);
+    } finally {
+      setLoading(false);
+    }
   }, [page, search, status, error]);
 
+  useEffect(() => {
+    void load();
+  }, [load, pathname, refreshToken, focusTick]);
+
+  useEffect(() => {
+    if (!highlight) return;
+    const t = window.setTimeout(() => {
+      router.replace("/admin/users", { scroll: false });
+    }, 2800);
+    return () => window.clearTimeout(t);
+  }, [highlight, router]);
+
   return (
-    <div>
+    <div className="portal-list">
       <PageHeader
         title="Users"
         description="Consumer accounts. Public ID is required for reseller transfers."
         action={
           <Link href="/admin/users/new">
-            <Button>Create user</Button>
+            <Button className="btn-press">Create user</Button>
           </Link>
         }
       />
       <Card className="mb-4">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Input
             label="Search"
             placeholder="Username, email…"
@@ -70,16 +104,27 @@ export default function AdminUsersPage() {
               { value: "banned", label: "Banned" },
             ]}
           />
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="secondary"
+              className="btn-press w-full"
+              onClick={() => void load()}
+              disabled={loading}
+            >
+              {loading ? "Refreshing…" : "Refresh"}
+            </Button>
+          </div>
         </div>
       </Card>
       {loading ? (
-        <LoadingBlock />
+        <LoadingBlock label="Loading users…" />
       ) : items.length === 0 ? (
         <EmptyState title="No users found" />
       ) : (
         <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+          <div className="portal-table-scroll">
+            <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="border-b border-border text-muted-foreground">
                 <tr>
                   <th className="px-2 py-2 font-medium">Public ID</th>
@@ -90,8 +135,15 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((u) => (
-                  <tr key={u.id} className="border-b border-border/60">
+                {items.map((u, i) => (
+                  <tr
+                    key={u.id}
+                    style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
+                    className={cn(
+                      "portal-row border-b border-border/60 transition hover:bg-primary/5",
+                      highlight === u.id && "portal-row-highlight",
+                    )}
+                  >
                     <td className="px-2 py-3 font-mono text-primary">{u.publicId}</td>
                     <td className="px-2 py-3">
                       <div className="font-medium">{u.displayName}</div>
@@ -107,7 +159,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-2 py-3 text-right">
                       <Link href={`/admin/users/${u.id}`}>
-                        <Button size="sm" variant="secondary">
+                        <Button size="sm" variant="secondary" className="btn-press">
                           Open
                         </Button>
                       </Link>
@@ -129,5 +181,13 @@ export default function AdminUsersPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={<LoadingBlock label="Loading users…" />}>
+      <UsersList />
+    </Suspense>
   );
 }

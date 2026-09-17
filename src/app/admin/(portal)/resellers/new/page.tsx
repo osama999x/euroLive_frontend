@@ -53,7 +53,10 @@ export default function CreateResellerPage() {
         permissions: defaultPermissions,
       });
       success(`Created ${reseller.displayName}`);
-      router.push(`/admin/resellers/${reseller.id}`);
+      router.push(
+        `/admin/resellers?r=${Date.now()}&highlight=${encodeURIComponent(reseller.id)}`,
+      );
+      router.refresh();
     } catch (err) {
       error(err);
     } finally {
@@ -62,12 +65,14 @@ export default function CreateResellerPage() {
   }
 
   return (
-    <div>
+    <div className="portal-list">
       <PageHeader
         title="Create reseller"
         action={
           <Link href="/admin/resellers">
-            <Button variant="secondary">Back</Button>
+            <Button variant="secondary" className="btn-press">
+              Back
+            </Button>
           </Link>
         }
       />
@@ -127,7 +132,7 @@ export default function CreateResellerPage() {
             value={form.initialBalance}
             onChange={(e) => setForm({ ...form, initialBalance: e.target.value })}
           />
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy} className="btn-press">
             {busy ? "Creating…" : "Create reseller"}
           </Button>
         </form>

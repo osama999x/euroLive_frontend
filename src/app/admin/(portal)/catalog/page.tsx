@@ -148,8 +148,8 @@ export default function AdminCatalogPage() {
           <EmptyState title="No items in this tab" />
         ) : (
           <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px] text-left text-sm">
+            <div className="portal-table-scroll">
+              <table className="w-full min-w-[640px] text-left text-sm">
                 <thead className="border-b border-border text-muted-foreground">
                   <tr>
                     <th className="px-2 py-2 font-medium">Preview</th>

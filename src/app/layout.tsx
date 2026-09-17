@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
 
 import { ToastProvider } from "@/components/ui/toast";
@@ -27,6 +27,12 @@ export const metadata: Metadata = {
     template: "%s | Euro Live",
   },
   description: "Euro Live — Live more together. Admin and Reseller portals.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -45,7 +45,7 @@ export default function AdminAuditPage() {
         description="Filter by action or actor UUID."
       />
       <Card className="mb-4">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Input
             label="Action"
             placeholder="user.ban"
@@ -83,8 +83,8 @@ export default function AdminAuditPage() {
         <EmptyState title="No audit entries" />
       ) : (
         <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
+          <div className="portal-table-scroll">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-border text-muted-foreground">
                 <tr>
                   <th className="px-2 py-2 font-medium">When</th>

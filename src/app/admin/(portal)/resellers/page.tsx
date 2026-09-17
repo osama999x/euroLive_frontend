@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,42 +13,75 @@ import { EmptyState, LoadingBlock, PageHeader } from "@/components/ui/page";
 import { useToast } from "@/components/ui/toast";
 import { adminApi } from "@/lib/api/admin";
 import type { AccountStatus, PaginationMeta, Reseller } from "@/lib/api/types";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
-export default function AdminResellersPage() {
+function ResellersList() {
   const { error } = useToast();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const refreshToken = searchParams.get("r") ?? "";
+  const highlight = searchParams.get("highlight") ?? "";
+
   const [items, setItems] = useState<Reseller[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<AccountStatus | "">("");
   const [loading, setLoading] = useState(true);
+  const [focusTick, setFocusTick] = useState(0);
 
   useEffect(() => {
+    const bump = () => setFocusTick((t) => t + 1);
+    const onVis = () => {
+      if (document.visibilityState === "visible") bump();
+    };
+    window.addEventListener("focus", bump);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", bump);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
+  const load = useCallback(async () => {
     setLoading(true);
-    adminApi
-      .listResellers({ page, limit: 20, search, status })
-      .then((res) => {
-        setItems(res.items);
-        setMeta(res.meta);
-      })
-      .catch((err) => error(err))
-      .finally(() => setLoading(false));
+    try {
+      const res = await adminApi.listResellers({ page, limit: 20, search, status });
+      setItems(res.items);
+      setMeta(res.meta);
+    } catch (err) {
+      error(err);
+    } finally {
+      setLoading(false);
+    }
   }, [page, search, status, error]);
 
+  useEffect(() => {
+    void load();
+  }, [load, pathname, refreshToken, focusTick]);
+
+  useEffect(() => {
+    if (!highlight) return;
+    const t = window.setTimeout(() => {
+      router.replace("/admin/resellers", { scroll: false });
+    }, 2800);
+    return () => window.clearTimeout(t);
+  }, [highlight, router]);
+
   return (
-    <div>
+    <div className="portal-list">
       <PageHeader
         title="Resellers"
         description="Create resellers, set permissions, and top up coin balances."
         action={
           <Link href="/admin/resellers/new">
-            <Button>Create reseller</Button>
+            <Button className="btn-press">Create reseller</Button>
           </Link>
         }
       />
       <Card className="mb-4">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Input
             label="Search"
             value={search}
@@ -70,16 +104,27 @@ export default function AdminResellersPage() {
               { value: "banned", label: "Banned" },
             ]}
           />
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="secondary"
+              className="btn-press w-full"
+              onClick={() => void load()}
+              disabled={loading}
+            >
+              {loading ? "Refreshing…" : "Refresh"}
+            </Button>
+          </div>
         </div>
       </Card>
       {loading ? (
-        <LoadingBlock />
+        <LoadingBlock label="Loading resellers…" />
       ) : items.length === 0 ? (
         <EmptyState title="No resellers yet" />
       ) : (
         <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+          <div className="portal-table-scroll">
+            <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="border-b border-border text-muted-foreground">
                 <tr>
                   <th className="px-2 py-2 font-medium">Reseller</th>
@@ -91,8 +136,15 @@ export default function AdminResellersPage() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((r) => (
-                  <tr key={r.id} className="border-b border-border/60">
+                {items.map((r, i) => (
+                  <tr
+                    key={r.id}
+                    style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
+                    className={cn(
+                      "portal-row border-b border-border/60 transition hover:bg-primary/5",
+                      highlight === r.id && "portal-row-highlight",
+                    )}
+                  >
                     <td className="px-2 py-3">
                       <div className="font-medium">{r.displayName}</div>
                       <div className="text-xs text-muted-foreground">
@@ -119,7 +171,7 @@ export default function AdminResellersPage() {
                     </td>
                     <td className="px-2 py-3 text-right">
                       <Link href={`/admin/resellers/${r.id}`}>
-                        <Button size="sm" variant="secondary">
+                        <Button size="sm" variant="secondary" className="btn-press">
                           Open
                         </Button>
                       </Link>
@@ -141,5 +193,13 @@ export default function AdminResellersPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function AdminResellersPage() {
+  return (
+    <Suspense fallback={<LoadingBlock label="Loading resellers…" />}>
+      <ResellersList />
+    </Suspense>
   );
 }

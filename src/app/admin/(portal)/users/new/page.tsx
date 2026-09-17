@@ -35,7 +35,10 @@ export default function CreateUserPage() {
         country: form.country || undefined,
       });
       success(`Created ${user.username} · publicId ${user.publicId}`);
-      router.push(`/admin/users/${user.id}`);
+      router.push(
+        `/admin/users?r=${Date.now()}&highlight=${encodeURIComponent(user.id)}`,
+      );
+      router.refresh();
     } catch (err) {
       error(err);
     } finally {
@@ -44,12 +47,14 @@ export default function CreateUserPage() {
   }
 
   return (
-    <div>
+    <div className="portal-list">
       <PageHeader
         title="Create user"
         action={
           <Link href="/admin/users">
-            <Button variant="secondary">Back</Button>
+            <Button variant="secondary" className="btn-press">
+              Back
+            </Button>
           </Link>
         }
       />
@@ -83,7 +88,7 @@ export default function CreateUserPage() {
             value={form.country}
             onChange={(e) => setForm({ ...form, country: e.target.value })}
           />
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy} className="btn-press">
             {busy ? "Creating…" : "Create user"}
           </Button>
         </form>
