@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import { useToast } from "@/components/ui/toast";
 import { adminApi } from "@/lib/api/admin";
 
 export default function CreateUserPage() {
-  const router = useRouter();
   const { error, success } = useToast();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -35,10 +33,12 @@ export default function CreateUserPage() {
         country: form.country || undefined,
       });
       success(`Created ${user.username} · publicId ${user.publicId}`);
-      router.push(
-        `/admin/users?r=${Date.now()}&highlight=${encodeURIComponent(user.id)}`,
-      );
-      router.refresh();
+      const highlight =
+        typeof user?.id === "string" && user.id
+          ? `&highlight=${encodeURIComponent(user.id)}`
+          : "";
+      window.location.assign(`/admin/users?r=${Date.now()}${highlight}`);
+      return;
     } catch (err) {
       error(err);
     } finally {

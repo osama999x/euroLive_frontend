@@ -58,6 +58,10 @@ function UsersList() {
   }, [page, search, status, error]);
 
   useEffect(() => {
+    if (refreshToken) setPage(1);
+  }, [refreshToken]);
+
+  useEffect(() => {
     void load();
   }, [load, pathname, refreshToken, focusTick]);
 

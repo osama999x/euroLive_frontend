@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,6 @@ const defaultPermissions = {
 };
 
 export default function CreateResellerPage() {
-  const router = useRouter();
   const { error, success } = useToast();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -53,10 +51,13 @@ export default function CreateResellerPage() {
         permissions: defaultPermissions,
       });
       success(`Created ${reseller.displayName}`);
-      router.push(
-        `/admin/resellers?r=${Date.now()}&highlight=${encodeURIComponent(reseller.id)}`,
-      );
-      router.refresh();
+      const highlight =
+        typeof reseller?.id === "string" && reseller.id
+          ? `&highlight=${encodeURIComponent(reseller.id)}`
+          : "";
+      // Hard navigate so the list remounts and refetches (soft push + refresh can race).
+      window.location.assign(`/admin/resellers?r=${Date.now()}${highlight}`);
+      return;
     } catch (err) {
       error(err);
     } finally {
