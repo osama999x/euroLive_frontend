@@ -27,15 +27,30 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+function toastId() {
+  try {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // non-secure origins (http://IP) throw on randomUUID
+  }
+  return `toast-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
 
   const push = useCallback((title: string | string[], tone: ToastTone = "default") => {
-    const id = crypto.randomUUID();
-    setItems((prev) => [...prev, { id, title: formatMessage(title), tone }]);
-    window.setTimeout(() => {
-      setItems((prev) => prev.filter((t) => t.id !== id));
-    }, 4200);
+    try {
+      const id = toastId();
+      setItems((prev) => [...prev, { id, title: formatMessage(title), tone }]);
+      window.setTimeout(() => {
+        setItems((prev) => prev.filter((t) => t.id !== id));
+      }, 4200);
+    } catch {
+      // never break callers (create redirects, etc.)
+    }
   }, []);
 
   const value = useMemo<ToastContextValue>(
@@ -43,11 +58,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       toast: push,
       success: (title) => push(title, "success"),
       error: (err) => {
-        if (err && typeof err === "object" && "message" in err) {
-          push((err as { message: string | string[] }).message, "danger");
-          return;
+        try {
+          if (err && typeof err === "object" && "message" in err) {
+            push((err as { message: string | string[] }).message, "danger");
+            return;
+          }
+          push(typeof err === "string" ? err : "Request failed", "danger");
+        } catch {
+          // never throw from toast helpers
         }
-        push(typeof err === "string" ? err : "Request failed", "danger");
       },
     }),
     [push],

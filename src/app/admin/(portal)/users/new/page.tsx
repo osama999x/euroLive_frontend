@@ -32,7 +32,13 @@ export default function CreateUserPage() {
         phone: form.phone || undefined,
         country: form.country || undefined,
       });
-      success(`Created ${user.username} · publicId ${user.publicId}`);
+      try {
+        success(
+          `Created ${user?.username || form.username} · publicId ${user?.publicId ?? "—"}`,
+        );
+      } catch {
+        // toast must never block redirect
+      }
       const highlight =
         typeof user?.id === "string" && user.id
           ? `&highlight=${encodeURIComponent(user.id)}`

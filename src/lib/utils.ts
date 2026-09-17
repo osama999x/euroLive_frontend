@@ -11,8 +11,12 @@ export function formatMessage(message: string | string[] | undefined): string {
 }
 
 export function newIdempotencyKey(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
+  try {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // http://IP is not a secure context — randomUUID throws
   }
   return `idemp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }

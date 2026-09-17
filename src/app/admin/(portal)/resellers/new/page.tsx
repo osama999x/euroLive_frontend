@@ -50,12 +50,15 @@ export default function CreateResellerPage() {
         initialBalance: Number.parseInt(form.initialBalance, 10),
         permissions: defaultPermissions,
       });
-      success(`Created ${reseller.displayName}`);
-      const highlight =
-        typeof reseller?.id === "string" && reseller.id
-          ? `&highlight=${encodeURIComponent(reseller.id)}`
-          : "";
-      // Hard navigate so the list remounts and refetches (soft push + refresh can race).
+      const name = reseller?.displayName || form.displayName || "reseller";
+      const id =
+        typeof reseller?.id === "string" && reseller.id ? reseller.id : "";
+      try {
+        success(`Created ${name}`);
+      } catch {
+        // toast must never block redirect
+      }
+      const highlight = id ? `&highlight=${encodeURIComponent(id)}` : "";
       window.location.assign(`/admin/resellers?r=${Date.now()}${highlight}`);
       return;
     } catch (err) {
