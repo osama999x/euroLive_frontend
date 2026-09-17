@@ -26,6 +26,7 @@ type AdminAuthContextValue = {
   staff: Staff | null;
   loading: boolean;
   setSession: (staff: Staff, tokens: { accessToken: string; refreshToken: string }) => void;
+  patchStaff: (partial: Partial<Staff>) => void;
   refreshMe: () => Promise<Staff | null>;
   logout: () => Promise<void>;
 };
@@ -45,6 +46,15 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const patchStaff = useCallback((partial: Partial<Staff>) => {
+    setStaff((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...partial };
+      setSessionJson("admin", next);
+      return next;
+    });
+  }, []);
 
   const refreshMe = useCallback(async () => {
     if (!getAccessToken("admin")) {
@@ -81,8 +91,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }, [refreshMe]);
 
   const value = useMemo(
-    () => ({ staff, loading, setSession, refreshMe, logout }),
-    [staff, loading, setSession, refreshMe, logout],
+    () => ({ staff, loading, setSession, patchStaff, refreshMe, logout }),
+    [staff, loading, setSession, patchStaff, refreshMe, logout],
   );
 
   return (

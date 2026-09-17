@@ -82,7 +82,7 @@ export const adminApi = {
     return apiFetch<unknown>("/admin/auth/2fa/enable", {
       method: "POST",
       portal: "admin",
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code: code.replace(/\D/g, "").slice(0, 6) }),
     });
   },
 
@@ -90,7 +90,7 @@ export const adminApi = {
     return apiFetch<unknown>("/admin/auth/2fa/disable", {
       method: "POST",
       portal: "admin",
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code: code.replace(/\D/g, "").slice(0, 6) }),
     });
   },
 
