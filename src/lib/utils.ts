@@ -32,3 +32,32 @@ export function formatDate(value?: string | null): string {
     return value;
   }
 }
+
+/** Normalize list endpoints that may return T[] or { items: T[] } */
+export function asList<T>(data: T[] | { items: T[] } | PaginatedLike<T> | null | undefined): T[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if ("items" in data && Array.isArray(data.items)) return data.items;
+  return [];
+}
+
+type PaginatedLike<T> = { items: T[]; meta?: unknown };
+
+export function isNotFoundError(err: unknown): boolean {
+  return (
+    err !== null &&
+    typeof err === "object" &&
+    "statusCode" in err &&
+    (err as { statusCode: number }).statusCode === 404
+  );
+}
+
+export function asPaginatedMeta(
+  data: PaginatedLike<unknown> | unknown[] | null | undefined,
+): import("@/lib/api/types").PaginationMeta | null {
+  if (!data || Array.isArray(data)) return null;
+  if ("meta" in data && data.meta && typeof data.meta === "object") {
+    return data.meta as import("@/lib/api/types").PaginationMeta;
+  }
+  return null;
+}

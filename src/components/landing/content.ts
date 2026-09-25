@@ -62,20 +62,33 @@ export const landing = {
     },
   ],
   portals: {
-    title: "Two doors into the network",
-    subtitle: "Portals for operators and the reseller edge — consumer live app ships separately.",
+    title: "Doors into the network",
+    subtitle:
+      "Operator portals for Admin, Agency, Reseller, and Host/App. Consumer live video ships separately.",
     items: [
       {
         title: "Master Admin",
-        body: "Dashboard, users, resellers, catalog, wallets, staff roles, audit, and security.",
+        body: "Users, hosts, agencies, salary, payouts, SOS, complaints, freezes, backups, and audit.",
         href: "/admin/login",
         cta: "Admin Portal",
       },
       {
+        title: "Agency",
+        body: "Host roster and share wallet totals — no salary amounts or evidence.",
+        href: "/agency/login",
+        cta: "Agency Portal",
+      },
+      {
         title: "Reseller",
-        body: "Wallet, coin transfer by public ID, catalog assigns, limits, transactions, and reports.",
+        body: "Coin transfer, catalog assigns, limits, reports, and SOS ack when permitted.",
         href: "/reseller/login",
         cta: "Reseller Portal",
+      },
+      {
+        title: "App / Host",
+        body: "Host rooms, complaints, SOS, salary PIN view, devices, and user reports.",
+        href: "/app/login",
+        cta: "App Portal",
       },
     ],
   },

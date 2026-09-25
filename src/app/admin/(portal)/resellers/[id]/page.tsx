@@ -153,6 +153,8 @@ export default function ResellerDetailPage() {
     "canAssignBadge",
     "canRemove",
     "canSetExpiry",
+    "canViewSosAlerts",
+    "canViewComplaintEvidence",
   ];
 
   return (

@@ -1,4 +1,6 @@
-export type Portal = "admin" | "reseller";
+"use client";
+
+export type Portal = "admin" | "reseller" | "agency" | "app";
 
 const KEYS = {
   admin: {
@@ -10,6 +12,16 @@ const KEYS = {
     access: "kl_reseller_access",
     refresh: "kl_reseller_refresh",
     session: "kl_reseller_session",
+  },
+  agency: {
+    access: "kl_agency_access",
+    refresh: "kl_agency_refresh",
+    session: "kl_agency_session",
+  },
+  app: {
+    access: "kl_app_access",
+    refresh: "kl_app_refresh",
+    session: "kl_app_session",
   },
 } as const;
 

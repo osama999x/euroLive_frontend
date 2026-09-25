@@ -23,15 +23,25 @@ export function LandingHero() {
       <p className="relative z-10 mt-3 max-w-xl text-sm leading-7 text-muted-foreground sm:mt-4 sm:text-lg">
         {landing.support}
       </p>
-      <div className="relative z-10 mt-6 flex w-full max-w-md flex-col gap-3 sm:mt-8 sm:max-w-none sm:flex-row sm:justify-center">
+      <div className="relative z-10 mt-6 flex w-full max-w-lg flex-col gap-3 sm:mt-8 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center">
         <Link href="/admin/login" className="w-full sm:w-auto">
           <Button size="lg" className="landing-cta-shimmer w-full sm:w-auto">
             Admin Portal
           </Button>
         </Link>
+        <Link href="/agency/login" className="w-full sm:w-auto">
+          <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+            Agency
+          </Button>
+        </Link>
         <Link href="/reseller/login" className="w-full sm:w-auto">
           <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-            Reseller Portal
+            Reseller
+          </Button>
+        </Link>
+        <Link href="/app/login" className="w-full sm:w-auto">
+          <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+            App / Host
           </Button>
         </Link>
       </div>

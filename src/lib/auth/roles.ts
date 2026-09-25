@@ -14,6 +14,16 @@ export const ADMIN_NAV: AdminNavItem[] = [
     roles: ["super_admin", "admin", "support", "moderator"],
   },
   {
+    href: "/admin/hosts",
+    label: "Hosts",
+    roles: ["super_admin", "admin", "support"],
+  },
+  {
+    href: "/admin/agencies",
+    label: "Agencies",
+    roles: ["super_admin", "admin", "finance"],
+  },
+  {
     href: "/admin/resellers",
     label: "Resellers",
     roles: ["super_admin", "admin", "finance"],
@@ -22,6 +32,46 @@ export const ADMIN_NAV: AdminNavItem[] = [
     href: "/admin/catalog",
     label: "Catalog",
     roles: ["super_admin", "admin"],
+  },
+  {
+    href: "/admin/rooms",
+    label: "Rooms",
+    roles: ["super_admin", "admin", "moderator"],
+  },
+  {
+    href: "/admin/complaints",
+    label: "Complaints",
+    roles: ["super_admin", "admin", "support", "moderator"],
+  },
+  {
+    href: "/admin/sos",
+    label: "SOS",
+    roles: ["super_admin", "admin", "support", "moderator"],
+  },
+  {
+    href: "/admin/salary",
+    label: "Salary",
+    roles: ["super_admin", "admin", "finance"],
+  },
+  {
+    href: "/admin/payouts",
+    label: "Payouts",
+    roles: ["super_admin", "finance"],
+  },
+  {
+    href: "/admin/freezes",
+    label: "Freezes",
+    roles: ["super_admin", "admin", "finance"],
+  },
+  {
+    href: "/admin/fraud",
+    label: "Fraud",
+    roles: ["super_admin", "admin", "finance"],
+  },
+  {
+    href: "/admin/backups",
+    label: "Backups",
+    roles: ["super_admin"],
   },
   {
     href: "/admin/wallets",
@@ -53,6 +103,10 @@ export function staffHasRole(
   if (!roles?.length) return false;
   if (roles.includes("super_admin")) return true;
   return allowed.some((r) => roles.includes(r));
+}
+
+export function isMaster(roles: StaffRole[] | undefined): boolean {
+  return Boolean(roles?.includes("super_admin"));
 }
 
 export function filterAdminNav(roles: StaffRole[] | undefined) {

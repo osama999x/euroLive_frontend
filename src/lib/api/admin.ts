@@ -329,6 +329,381 @@ export const adminApi = {
       query,
     });
   },
+
+  // —— Euro Live Core ——
+  setUserOfficial(
+    id: string,
+    body: { isOfficial: boolean; officialId?: string },
+  ) {
+    return apiFetch<ConsumerUser>(`/admin/users/${id}/official`, {
+      method: "PATCH",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  listAgencies(query: {
+    page?: number;
+    limit?: number;
+    country?: string;
+    status?: string;
+  }) {
+    return apiFetch<Paginated<import("@/lib/api/types").Agency>>(
+      "/admin/agencies",
+      { portal: "admin", query },
+    );
+  },
+
+  createAgency(body: Record<string, unknown>) {
+    return apiFetch<import("@/lib/api/types").Agency>("/admin/agencies", {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  getAgency(id: string) {
+    return apiFetch<import("@/lib/api/types").Agency>(`/admin/agencies/${id}`, {
+      portal: "admin",
+    });
+  },
+
+  updateAgency(id: string, body: Record<string, unknown>) {
+    return apiFetch<import("@/lib/api/types").Agency>(`/admin/agencies/${id}`, {
+      method: "PATCH",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  freezeAgency(id: string, reason: string) {
+    return apiFetch<unknown>(`/admin/agencies/${id}/freeze`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  listHosts(query: { page?: number; limit?: number; agencyId?: string; country?: string }) {
+    return apiFetch<Paginated<import("@/lib/api/types").HostProfile>>(
+      "/admin/hosts",
+      { portal: "admin", query },
+    );
+  },
+
+  createHost(body: Record<string, unknown>) {
+    return apiFetch<import("@/lib/api/types").HostProfile>("/admin/hosts", {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  getHost(id: string) {
+    return apiFetch<import("@/lib/api/types").HostProfile>(`/admin/hosts/${id}`, {
+      portal: "admin",
+    });
+  },
+
+  updateHost(id: string, body: Record<string, unknown>) {
+    return apiFetch<import("@/lib/api/types").HostProfile>(`/admin/hosts/${id}`, {
+      method: "PATCH",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  protectionLock(id: string, body: { reason: string; hours?: number }) {
+    return apiFetch<unknown>(`/admin/hosts/${id}/protection-lock`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  protectionUnlock(id: string) {
+    return apiFetch<unknown>(`/admin/hosts/${id}/protection-unlock`, {
+      method: "POST",
+      portal: "admin",
+    });
+  },
+
+  freezeHost(id: string, reason: string) {
+    return apiFetch<unknown>(`/admin/hosts/${id}/freeze`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  postHostHours(
+    id: string,
+    body: { periodId: string; liveHours: number; liveDays: number; beans?: number },
+  ) {
+    return apiFetch<unknown>(`/admin/hosts/${id}/hours`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  listRooms(query: { page?: number; limit?: number } = {}) {
+    return apiFetch<Paginated<import("@/lib/api/types").LiveRoom> | import("@/lib/api/types").LiveRoom[]>(
+      "/admin/rooms",
+      { portal: "admin", query },
+    );
+  },
+
+  listComplaints(query: { page?: number; limit?: number; status?: string } = {}) {
+    return apiFetch<
+      Paginated<import("@/lib/api/types").Complaint> | import("@/lib/api/types").Complaint[]
+    >("/admin/complaints", { portal: "admin", query });
+  },
+
+  getComplaint(id: string) {
+    return apiFetch<import("@/lib/api/types").Complaint>(
+      `/admin/complaints/${id}`,
+      { portal: "admin" },
+    );
+  },
+
+  reviewComplaint(
+    id: string,
+    body: {
+      action: "confirm" | "reject" | "close";
+      note?: string;
+      penalty?: string;
+      salaryDeduct?: boolean;
+    },
+  ) {
+    return apiFetch<unknown>(`/admin/complaints/${id}/review`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  listSos(query: { page?: number; limit?: number; status?: string } = {}) {
+    return apiFetch<
+      Paginated<import("@/lib/api/types").SosAlert> | import("@/lib/api/types").SosAlert[]
+    >("/admin/sos", { portal: "admin", query });
+  },
+
+  ackSos(id: string) {
+    return apiFetch<unknown>(`/admin/sos/${id}/ack`, {
+      method: "POST",
+      portal: "admin",
+    });
+  },
+
+  resolveSos(id: string, outcome: string) {
+    return apiFetch<unknown>(`/admin/sos/${id}/resolve`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify({ outcome }),
+    });
+  },
+
+  listCountries() {
+    return apiFetch<import("@/lib/api/types").CountryRule[]>(
+      "/admin/countries",
+      { portal: "admin" },
+    );
+  },
+
+  updateCountry(code: string, body: Record<string, unknown>) {
+    return apiFetch<import("@/lib/api/types").CountryRule>(
+      `/admin/countries/${code}`,
+      {
+        method: "PATCH",
+        portal: "admin",
+        body: JSON.stringify(body),
+      },
+    );
+  },
+
+  listSalaryRules(query: { countryCode?: string } = {}) {
+    return apiFetch<import("@/lib/api/types").SalaryRule[]>(
+      "/admin/salary-rules",
+      { portal: "admin", query },
+    );
+  },
+
+  createSalaryRule(body: Record<string, unknown>) {
+    return apiFetch<import("@/lib/api/types").SalaryRule>(
+      "/admin/salary-rules",
+      {
+        method: "POST",
+        portal: "admin",
+        body: JSON.stringify(body),
+      },
+    );
+  },
+
+  updateSalaryRule(id: string, body: Record<string, unknown>) {
+    return apiFetch<import("@/lib/api/types").SalaryRule>(
+      `/admin/salary-rules/${id}`,
+      {
+        method: "PATCH",
+        portal: "admin",
+        body: JSON.stringify(body),
+      },
+    );
+  },
+
+  listSalaryPeriods() {
+    return apiFetch<import("@/lib/api/types").SalaryPeriod[]>(
+      "/admin/salary/periods",
+      { portal: "admin" },
+    );
+  },
+
+  createSalaryPeriod(body: {
+    label: string;
+    startsOn: string;
+    endsOn: string;
+  }) {
+    return apiFetch<import("@/lib/api/types").SalaryPeriod>(
+      "/admin/salary/periods",
+      {
+        method: "POST",
+        portal: "admin",
+        body: JSON.stringify(body),
+      },
+    );
+  },
+
+  listPayouts() {
+    return apiFetch<
+      Paginated<import("@/lib/api/types").PayoutBatch> | import("@/lib/api/types").PayoutBatch[]
+    >("/admin/payouts", { portal: "admin" });
+  },
+
+  getPayout(id: string) {
+    return apiFetch<import("@/lib/api/types").PayoutBatch>(
+      `/admin/payouts/${id}`,
+      { portal: "admin" },
+    );
+  },
+
+  calculatePayout(periodId: string) {
+    return apiFetch<import("@/lib/api/types").PayoutBatch>(
+      "/admin/payouts/calculate",
+      {
+        method: "POST",
+        portal: "admin",
+        body: JSON.stringify({ periodId }),
+      },
+    );
+  },
+
+  approvePayoutHold(id: string) {
+    return apiFetch<import("@/lib/api/types").PayoutBatch>(
+      `/admin/payouts/${id}/approve-hold`,
+      { method: "POST", portal: "admin" },
+    );
+  },
+
+  correctPayoutItem(
+    payoutId: string,
+    itemId: string,
+    body: { newAmount: number; reason: string },
+  ) {
+    return apiFetch<unknown>(`/admin/payouts/${payoutId}/items/${itemId}/correct`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  releasePayout(id: string) {
+    return apiFetch<import("@/lib/api/types").PayoutBatch>(
+      `/admin/payouts/${id}/release`,
+      { method: "POST", portal: "admin" },
+    );
+  },
+
+  listFreezes(query: { status?: string; ownerId?: string } = {}) {
+    return apiFetch<
+      Paginated<import("@/lib/api/types").FreezeCase> | import("@/lib/api/types").FreezeCase[]
+    >("/admin/freezes", { portal: "admin", query });
+  },
+
+  createFreeze(body: {
+    ownerId: string;
+    ownerType: string;
+    freezeType: "coins" | "account" | "wallet";
+    reason: string;
+  }) {
+    return apiFetch<import("@/lib/api/types").FreezeCase>("/admin/freezes", {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  reviewFreeze(
+    id: string,
+    body: { action: "restore" | "confirm" | "ban"; note?: string },
+  ) {
+    return apiFetch<unknown>(`/admin/freezes/${id}/review`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  listFraud() {
+    return apiFetch<
+      Paginated<import("@/lib/api/types").FraudCase> | import("@/lib/api/types").FraudCase[]
+    >("/admin/fraud", { portal: "admin" });
+  },
+
+  reviewFraud(
+    id: string,
+    body: {
+      action: "restore" | "correct" | "penalty" | "ban";
+      note?: string;
+      amount?: number;
+    },
+  ) {
+    return apiFetch<unknown>(`/admin/fraud/${id}/review`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  backupSettings() {
+    return apiFetch<import("@/lib/api/types").BackupSettings>(
+      "/admin/backups/settings",
+      { portal: "admin" },
+    );
+  },
+
+  updateBackupSettings(body: Record<string, unknown>) {
+    return apiFetch<import("@/lib/api/types").BackupSettings>(
+      "/admin/backups/settings",
+      {
+        method: "PATCH",
+        portal: "admin",
+        body: JSON.stringify(body),
+      },
+    );
+  },
+
+  runBackup() {
+    return apiFetch<import("@/lib/api/types").BackupRun>("/admin/backups/run", {
+      method: "POST",
+      portal: "admin",
+    });
+  },
+
+  listBackups() {
+    return apiFetch<
+      Paginated<import("@/lib/api/types").BackupRun> | import("@/lib/api/types").BackupRun[]
+    >("/admin/backups", { portal: "admin" });
+  },
 };
 
 export type { TokenPair };

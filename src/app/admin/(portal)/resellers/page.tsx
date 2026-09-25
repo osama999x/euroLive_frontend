@@ -150,7 +150,14 @@ function ResellersList() {
                     )}
                   >
                     <td className="px-2 py-3">
-                      <div className="font-medium">{r.displayName}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{r.displayName}</span>
+                        {r.isOfficial ? (
+                          <Badge tone="gold">
+                            Official{r.officialId ? ` · ${r.officialId}` : ""}
+                          </Badge>
+                        ) : null}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {r.email} · @{r.username}
                       </div>

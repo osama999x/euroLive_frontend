@@ -17,6 +17,8 @@ const defaultPermissions = {
   canAssignBadge: true,
   canRemove: true,
   canSetExpiry: true,
+  canViewSosAlerts: false,
+  canViewComplaintEvidence: false,
   dailyRechargeLimit: 5000,
   dailyFrameLimit: 50,
   dailyEntryLimit: 50,

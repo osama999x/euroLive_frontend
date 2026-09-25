@@ -20,9 +20,9 @@ export function LandingPortals() {
           </p>
         </Reveal>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 sm:grid-cols-2">
           {landing.portals.items.map((item, i) => (
-            <Reveal key={item.title} delayMs={i * 100}>
+            <Reveal key={item.title} delayMs={i * 80}>
               <div className="flex h-full flex-col border-l-2 border-primary/50 pl-5">
                 <h3 className="font-display text-2xl font-semibold text-gold-soft">
                   {item.title}
@@ -32,9 +32,7 @@ export function LandingPortals() {
                 </p>
                 <Link href={item.href} className="mt-6 inline-flex">
                   <Button
-                    className={
-                      i === 0 ? "landing-cta-shimmer" : undefined
-                    }
+                    className={i === 0 ? "landing-cta-shimmer" : undefined}
                     variant={i === 0 ? "primary" : "secondary"}
                   >
                     {item.cta}

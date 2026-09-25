@@ -25,23 +25,31 @@ export default function AdminDashboardPage() {
     <div>
       <PageHeader
         title="Dashboard"
-        description="Live KPIs from the admin API. Placeholder modules show as coming soon."
+        description="Live KPIs from Euro Live Core and platform modules."
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Active rooms" value={data.activeRooms} />
+        <StatCard label="Pending payouts" value={data.pendingPayouts ?? 0} />
+        <StatCard label="Open SOS" value={data.openSos ?? 0} />
+        <StatCard label="Open complaints" value={data.openComplaints ?? 0} />
+        <StatCard label="Frozen wallets" value={data.frozenWallets ?? 0} />
+        <StatCard label="Pending withdrawals" value={data.pendingWithdrawals} />
+        <StatCard label="Flagged reports" value={data.flaggedReports} />
         <StatCard label="Users total" value={data.usersTotal} />
-        <StatCard label="Users banned" value={data.usersBanned} />
         <StatCard label="Resellers" value={data.resellersTotal} />
         <StatCard label="Coins in circulation" value={data.coinsInCirculation} />
+        <StatCard label="Users banned" value={data.usersBanned} />
       </div>
-      <Card className="mt-6" title="Coming soon" description="These endpoints return placeholders until modules ship.">
+      <Card
+        className="mt-6"
+        title="Engagement & revenue"
+        description="Secondary metrics from analytics placeholders."
+      >
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             ["DAU", data.dau],
             ["MAU", data.mau],
             ["Revenue", data.revenue],
-            ["Active rooms", data.activeRooms],
-            ["Pending withdrawals", data.pendingWithdrawals],
-            ["Flagged reports", data.flaggedReports],
           ].map(([label, value]) => (
             <div
               key={String(label)}

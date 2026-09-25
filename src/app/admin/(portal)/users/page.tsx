@@ -150,7 +150,14 @@ function UsersList() {
                   >
                     <td className="px-2 py-3 font-mono text-primary">{u.publicId}</td>
                     <td className="px-2 py-3">
-                      <div className="font-medium">{u.displayName}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{u.displayName}</span>
+                        {u.isOfficial ? (
+                          <Badge tone="gold">
+                            Official{u.officialId ? ` · ${u.officialId}` : ""}
+                          </Badge>
+                        ) : null}
+                      </div>
                       <div className="text-xs text-muted-foreground">@{u.username}</div>
                     </td>
                     <td className="px-2 py-3">

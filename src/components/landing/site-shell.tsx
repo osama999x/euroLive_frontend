@@ -34,6 +34,16 @@ export function SiteHeader({ activeHref }: { activeHref?: string }) {
               Admin
             </Button>
           </Link>
+          <Link href="/agency/login" className="hidden sm:inline-flex">
+            <Button variant="ghost" size="sm">
+              Agency
+            </Button>
+          </Link>
+          <Link href="/app/login" className="hidden sm:inline-flex">
+            <Button variant="ghost" size="sm">
+              App
+            </Button>
+          </Link>
           <Link href="/reseller/login">
             <Button variant="secondary" size="sm">
               Reseller

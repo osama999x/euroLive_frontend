@@ -158,4 +158,12 @@ export const resellerApi = {
       query,
     });
   },
+
+  ackSos(id: string) {
+    return apiFetch<unknown>(`/reseller/sos/${id}/ack`, {
+      method: "POST",
+      portal: "reseller",
+      body: JSON.stringify({}),
+    });
+  },
 };

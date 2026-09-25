@@ -12,22 +12,30 @@ import { LoadingBlock, PageHeader } from "@/components/ui/page";
 import { useToast } from "@/components/ui/toast";
 import { adminApi } from "@/lib/api/admin";
 import type { ConsumerUser, LedgerDirection, WalletCurrency } from "@/lib/api/types";
+import { useAdminAuth } from "@/lib/auth/admin-store";
+import { isMaster } from "@/lib/auth/roles";
 import { formatDate, newIdempotencyKey } from "@/lib/utils";
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>();
+  const { staff } = useAdminAuth();
+  const master = isMaster(staff?.roles);
   const { error, success } = useToast();
   const [user, setUser] = useState<ConsumerUser | null>(null);
   const [amount, setAmount] = useState("100");
   const [direction, setDirection] = useState<LedgerDirection>("credit");
   const [currency, setCurrency] = useState<WalletCurrency>("coin");
   const [note, setNote] = useState("");
+  const [officialId, setOfficialId] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
     adminApi
       .getUser(params.id)
-      .then(setUser)
+      .then((u) => {
+        setUser(u);
+        setOfficialId(u.officialId ?? "");
+      })
       .catch((err) => error(err));
   }, [params.id, error]);
 
@@ -45,6 +53,24 @@ export default function UserDetailPage() {
           : await adminApi.banUser(user.id);
       setUser(next);
       success(next.status === "banned" ? "User banned" : "User unbanned");
+    } catch (err) {
+      error(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleOfficial(next: boolean) {
+    if (!user || !master) return;
+    setBusy(true);
+    try {
+      const updated = await adminApi.setUserOfficial(user.id, {
+        isOfficial: next,
+        officialId: next && officialId.trim() ? officialId.trim() : undefined,
+      });
+      setUser(updated);
+      setOfficialId(updated.officialId ?? "");
+      success(next ? "Official account enabled" : "Official account disabled");
     } catch (err) {
       error(err);
     } finally {
@@ -126,6 +152,22 @@ export default function UserDetailPage() {
               <dd>{user.country ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
+              <dt className="text-muted-foreground">Official</dt>
+              <dd>
+                {user.isOfficial ? (
+                  <Badge tone="gold">Official</Badge>
+                ) : (
+                  <span className="text-muted-foreground">No</span>
+                )}
+              </dd>
+            </div>
+            {user.officialId ? (
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">Official ID</dt>
+                <dd className="font-mono text-xs">{user.officialId}</dd>
+              </div>
+            ) : null}
+            <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">Created</dt>
               <dd>{formatDate(user.createdAt)}</dd>
             </div>
@@ -135,6 +177,36 @@ export default function UserDetailPage() {
             </div>
           </dl>
         </Card>
+
+        {master ? (
+          <Card title="Official account (Master)" description="Mark verified official hosts or brands.">
+            <div className="space-y-3">
+              <Input
+                label="Official ID (optional)"
+                value={officialId}
+                onChange={(e) => setOfficialId(e.target.value)}
+                placeholder="Display badge id"
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  disabled={busy || user.isOfficial}
+                  onClick={() => void toggleOfficial(true)}
+                >
+                  Enable official
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={busy || !user.isOfficial}
+                  onClick={() => void toggleOfficial(false)}
+                >
+                  Remove official
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ) : null}
 
         <Card title="Wallet adjust" description="Uses UUID ownerId. Amounts are integers.">
           <form onSubmit={adjustWallet} className="space-y-3">

@@ -37,7 +37,8 @@ export function BrandLogo({
           width={s.img}
           height={s.img}
           className="h-full w-full object-cover"
-          priority={size === "lg"}
+          priority
+          loading="eager"
         />
       </span>
       {showWordmark ? (

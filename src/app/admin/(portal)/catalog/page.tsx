@@ -16,6 +16,7 @@ const tabs: { id: CatalogType; label: string }[] = [
   { id: "frame", label: "Frames" },
   { id: "entry", label: "Entries" },
   { id: "badge", label: "Badges" },
+  { id: "wallpaper", label: "Wallpapers" },
 ];
 
 const emptyForm = {
@@ -130,7 +131,7 @@ export default function AdminCatalogPage() {
     <div>
       <PageHeader
         title="Catalog"
-        description="Frames, entries, and badges. Price is coins debited from reseller on assign."
+        description="Frames, entries, badges, and wallpapers. Price is coins debited from reseller on assign."
         action={<Button onClick={openCreate}>Add item</Button>}
       />
       <Tabs

@@ -1,0 +1,275 @@
+"use client";
+
+import Link from "next/link";
+import { FormEvent, Suspense, useCallback, useEffect, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input, Select } from "@/components/ui/input";
+import { Modal, Pagination } from "@/components/ui/modal";
+import { EmptyState, LoadingBlock, PageHeader } from "@/components/ui/page";
+import { useToast } from "@/components/ui/toast";
+import { adminApi } from "@/lib/api/admin";
+import type { HostProfile, PaginationMeta } from "@/lib/api/types";
+import { formatDate, isNotFoundError } from "@/lib/utils";
+
+function HostsList() {
+  const { error, success, toast } = useToast();
+  const [items, setItems] = useState<HostProfile[]>([]);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+  const [page, setPage] = useState(1);
+  const [agencyId, setAgencyId] = useState("");
+  const [country, setCountry] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"existing" | "new">("existing");
+  const [form, setForm] = useState({
+    userId: "",
+    username: "",
+    displayName: "",
+    password: "",
+    country: "PK",
+    agencyId: "",
+  });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminApi.listHosts({
+        page,
+        limit: 20,
+        agencyId: agencyId || undefined,
+        country: country || undefined,
+      });
+      setItems(res.items);
+      setMeta(res.meta);
+    } catch (err) {
+      if (isNotFoundError(err)) toast("Hosts API not available yet");
+      else error(err);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, agencyId, country, error, toast]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function onCreate(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const body: Record<string, unknown> =
+        mode === "existing"
+          ? { userId: form.userId.trim() }
+          : {
+              username: form.username.trim(),
+              displayName: form.displayName.trim(),
+              password: form.password,
+              country: form.country,
+            };
+      if (form.agencyId.trim()) body.agencyId = form.agencyId.trim();
+      const created = await adminApi.createHost(body);
+      success("Host created");
+      setCreateOpen(false);
+      window.location.href = `/admin/hosts/${created.id}`;
+    } catch (err) {
+      error(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="portal-list">
+      <PageHeader
+        title="Hosts"
+        description="Live hosts linked to consumer users and agencies."
+        action={
+          <Button className="btn-press" onClick={() => setCreateOpen(true)}>
+            Create host
+          </Button>
+        }
+      />
+      <Card className="mb-4">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Input
+            label="Agency ID"
+            placeholder="UUID filter"
+            value={agencyId}
+            onChange={(e) => {
+              setPage(1);
+              setAgencyId(e.target.value);
+            }}
+          />
+          <Select
+            label="Country"
+            value={country}
+            onChange={(e) => {
+              setPage(1);
+              setCountry(e.target.value);
+            }}
+            options={[
+              { value: "", label: "All" },
+              { value: "PK", label: "PK" },
+              { value: "IN", label: "IN" },
+              { value: "BD", label: "BD" },
+            ]}
+          />
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="secondary"
+              className="btn-press w-full"
+              onClick={() => void load()}
+              disabled={loading}
+            >
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </Card>
+      {loading ? (
+        <LoadingBlock label="Loading hosts…" />
+      ) : items.length === 0 ? (
+        <EmptyState title="No hosts found" />
+      ) : (
+        <Card>
+          <div className="portal-table-scroll">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="border-b border-border text-muted-foreground">
+                <tr>
+                  <th className="px-2 py-2 font-medium">Host</th>
+                  <th className="px-2 py-2 font-medium">Agency</th>
+                  <th className="px-2 py-2 font-medium">Country</th>
+                  <th className="px-2 py-2 font-medium">Status</th>
+                  <th className="px-2 py-2 font-medium">Protection</th>
+                  <th className="px-2 py-2 font-medium" />
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((h) => (
+                  <tr key={h.id} className="border-b border-border/60">
+                    <td className="px-2 py-3">
+                      <div className="font-medium">
+                        {h.user?.displayName ?? h.userId.slice(0, 8)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {h.user ? `@${h.user.username}` : h.userId}
+                      </div>
+                    </td>
+                    <td className="px-2 py-3 text-muted-foreground">
+                      {h.agency?.displayName ?? "—"}
+                    </td>
+                    <td className="px-2 py-3">{h.country}</td>
+                    <td className="px-2 py-3">
+                      <Badge tone={h.status === "active" ? "success" : "danger"}>
+                        {h.status}
+                      </Badge>
+                    </td>
+                    <td className="px-2 py-3">
+                      {h.protectionLocked ? (
+                        <Badge tone="gold">Locked</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-3 text-right">
+                      <Link href={`/admin/hosts/${h.id}`}>
+                        <Button size="sm" variant="secondary" className="btn-press">
+                          Open
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {meta ? (
+            <Pagination
+              page={meta.page}
+              totalPages={meta.totalPages}
+              hasNextPage={meta.hasNextPage}
+              hasPreviousPage={meta.hasPreviousPage}
+              onPageChange={setPage}
+            />
+          ) : null}
+        </Card>
+      )}
+
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create host">
+        <form onSubmit={onCreate} className="space-y-3">
+          <Select
+            label="Mode"
+            value={mode}
+            onChange={(e) => setMode(e.target.value as "existing" | "new")}
+            options={[
+              { value: "existing", label: "Link existing user (userId)" },
+              { value: "new", label: "Create user + host" },
+            ]}
+          />
+          {mode === "existing" ? (
+            <Input
+              label="User ID (UUID)"
+              required
+              value={form.userId}
+              onChange={(e) => setForm({ ...form, userId: e.target.value })}
+            />
+          ) : (
+            <>
+              <Input
+                label="Username"
+                required
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+              />
+              <Input
+                label="Display name"
+                required
+                value={form.displayName}
+                onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+              />
+              <Input
+                label="Password"
+                type="password"
+                required
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+              <Select
+                label="Country"
+                value={form.country}
+                onChange={(e) => setForm({ ...form, country: e.target.value })}
+                options={[
+                  { value: "PK", label: "PK" },
+                  { value: "IN", label: "IN" },
+                  { value: "BD", label: "BD" },
+                ]}
+              />
+            </>
+          )}
+          <Input
+            label="Agency ID (optional)"
+            value={form.agencyId}
+            onChange={(e) => setForm({ ...form, agencyId: e.target.value })}
+          />
+          <Button type="submit" disabled={busy} className="w-full">
+            {busy ? "Creating…" : "Create"}
+          </Button>
+        </form>
+      </Modal>
+    </div>
+  );
+}
+
+export default function AdminHostsPage() {
+  return (
+    <Suspense fallback={<LoadingBlock label="Loading hosts…" />}>
+      <HostsList />
+    </Suspense>
+  );
+}

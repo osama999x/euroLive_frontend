@@ -26,6 +26,11 @@ export function ResellerShell({ children }: { children: ReactNode }) {
     },
     { href: "/reseller/transactions", label: "Transactions", show: true },
     { href: "/reseller/reports", label: "Reports", show: true },
+    {
+      href: "/reseller/sos",
+      label: "SOS",
+      show: Boolean(perms.canViewSosAlerts),
+    },
     { href: "/reseller/limits", label: "My limits", show: true },
   ]
     .filter((i) => i.show)
@@ -50,8 +55,14 @@ export function ResellerShell({ children }: { children: ReactNode }) {
         <>
           <p className="truncate text-xs font-medium text-foreground">
             {reseller.displayName}
+            {reseller.isOfficial ? " · Official" : ""}
           </p>
           <p className="truncate text-xs text-primary">{reseller.email}</p>
+          {reseller.isOfficial && reseller.officialId ? (
+            <p className="truncate text-[10px] text-muted-foreground">
+              ID {reseller.officialId}
+            </p>
+          ) : null}
         </>
       )}
     >
