@@ -128,6 +128,7 @@ export const adminApi = {
     return apiFetch<ConsumerUser>(`/admin/users/${id}`, { portal: "admin" });
   },
 
+  /** Legacy permanent ID ban — prefer createUserBan */
   banUser(id: string) {
     return apiFetch<ConsumerUser>(`/admin/users/${id}/ban`, {
       method: "PATCH",
@@ -135,10 +136,47 @@ export const adminApi = {
     });
   },
 
+  /** Lift all active ID bans */
   unbanUser(id: string) {
     return apiFetch<ConsumerUser>(`/admin/users/${id}/unban`, {
       method: "PATCH",
       portal: "admin",
+    });
+  },
+
+  listUserDevices(id: string) {
+    return apiFetch<
+      | import("@/lib/api/types").UserDeviceRecord[]
+      | { items: import("@/lib/api/types").UserDeviceRecord[] }
+    >(`/admin/users/${id}/devices`, { portal: "admin" });
+  },
+
+  listUserBans(id: string) {
+    return apiFetch<
+      | import("@/lib/api/types").UserBanRecord[]
+      | { items: import("@/lib/api/types").UserBanRecord[] }
+    >(`/admin/users/${id}/bans`, { portal: "admin" });
+  },
+
+  createUserBan(
+    id: string,
+    body: import("@/lib/api/types").CreateUserBanBody,
+  ) {
+    return apiFetch<{
+      bans: import("@/lib/api/types").UserBanRecord[];
+      user: ConsumerUser;
+    }>(`/admin/users/${id}/bans`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  revokeUserBan(userId: string, banId: string) {
+    return apiFetch<unknown>(`/admin/users/${userId}/bans/${banId}/revoke`, {
+      method: "POST",
+      portal: "admin",
+      body: JSON.stringify({}),
     });
   },
 

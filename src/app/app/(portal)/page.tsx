@@ -129,6 +129,22 @@ export default function AppDashboardPage() {
               </dd>
             </div>
           ) : null}
+          {host.liveBanned || user?.liveBanned ? (
+            <div className="sm:col-span-2">
+              <dt className="text-muted-foreground">Live streaming</dt>
+              <dd>
+                <Badge tone="danger">Banned</Badge>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  Until{" "}
+                  {host.liveBannedUntil || user?.liveBannedUntil
+                    ? formatDate(
+                        host.liveBannedUntil ?? user?.liveBannedUntil ?? null,
+                      )
+                    : "Permanent"}
+                </span>
+              </dd>
+            </div>
+          ) : null}
         </dl>
       </Card>
       <Card className="mt-4" title="Rooms">

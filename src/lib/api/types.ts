@@ -122,6 +122,9 @@ export type Reseller = {
   updatedAt: string;
 };
 
+export type BanType = "id" | "device" | "live";
+export type BanDuration = "1h" | "24h" | "7d" | "30d" | "permanent" | "custom";
+
 export type ConsumerUser = {
   id: string;
   publicId: string;
@@ -137,9 +140,45 @@ export type ConsumerUser = {
   deviceIds?: string[];
   isOfficial?: boolean;
   officialId?: string | null;
+  idBanned?: boolean;
+  idBannedUntil?: string | null;
+  liveBanned?: boolean;
+  liveBannedUntil?: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
+};
+
+export type UserDeviceRecord = {
+  id: string;
+  deviceId: string;
+  deviceName: string | null;
+  lastSeenAt: string | null;
+  isNew: boolean;
+  banned: boolean;
+  bannedUntil: string | null;
+};
+
+export type UserBanRecord = {
+  id: string;
+  userId: string;
+  deviceId: string | null;
+  type: BanType;
+  reason: string | null;
+  startsAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  createdById: string;
+  createdAt: string;
+};
+
+export type CreateUserBanBody = {
+  type: BanType;
+  duration: BanDuration;
+  customHours?: number;
+  reason?: string;
+  deviceId?: string;
+  includeDevices?: boolean;
 };
 
 /** App/host auth public user (no phone) */
@@ -156,6 +195,8 @@ export type AppUser = {
   status: UserStatus;
   isOfficial?: boolean;
   officialId?: string | null;
+  liveBanned?: boolean;
+  liveBannedUntil?: string | null;
 };
 
 export type CatalogItem = {
@@ -188,6 +229,13 @@ export type AdminDashboard = {
   openSos?: number;
   openComplaints?: number;
   frozenWallets?: number;
+  /** Optional ban breakdowns if backend sends them */
+  idBansActive?: number;
+  liveBansActive?: number;
+  deviceBansActive?: number;
+  usersIdBanned?: number;
+  usersLiveBanned?: number;
+  usersDeviceBanned?: number;
 };
 
 export type AuditLog = {
@@ -312,6 +360,8 @@ export type HostProfile = {
   protectionLocked?: boolean;
   protectionLockedUntil?: string | null;
   protectionCaseNumber?: string | null;
+  liveBanned?: boolean;
+  liveBannedUntil?: string | null;
   user?: {
     publicId: string;
     username: string;

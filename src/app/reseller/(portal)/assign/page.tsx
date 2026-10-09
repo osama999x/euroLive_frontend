@@ -1,22 +1,198 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input, Select } from "@/components/ui/input";
-import { PageHeader } from "@/components/ui/page";
+import { Input } from "@/components/ui/input";
+import { EmptyState, LoadingBlock, PageHeader } from "@/components/ui/page";
 import { useToast } from "@/components/ui/toast";
 import { resellerApi } from "@/lib/api/reseller";
 import type {
   AssignDuration,
   AssignedItem,
   CatalogItem,
-  CatalogType,
   ResellerUserLookup,
 } from "@/lib/api/types";
 import { useResellerAuth } from "@/lib/auth/reseller-store";
+import { cn } from "@/lib/utils";
+
+const DURATION_CHIPS: { value: AssignDuration; label: string }[] = [
+  { value: "1", label: "1 day" },
+  { value: "7", label: "7 days" },
+  { value: "30", label: "30 days" },
+  { value: "permanent", label: "Permanent" },
+];
+
+type SectionKey = "frame" | "entry" | "badge";
+
+function DurationChips({
+  value,
+  onChange,
+  disabled,
+  showCustom,
+  customDays,
+  onCustomDays,
+}: {
+  value: AssignDuration;
+  onChange: (d: AssignDuration) => void;
+  disabled?: boolean;
+  showCustom?: boolean;
+  customDays: string;
+  onCustomDays: (v: string) => void;
+}) {
+  const chips = showCustom
+    ? [...DURATION_CHIPS, { value: "custom" as AssignDuration, label: "Custom" }]
+    : DURATION_CHIPS;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+        Duration
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {chips.map((chip) => (
+          <button
+            key={chip.value}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(chip.value)}
+            className={cn(
+              "btn-press rounded-lg border px-3 py-1.5 text-sm transition",
+              value === chip.value
+                ? "border-primary bg-gold-gradient font-medium text-primary-foreground"
+                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-foreground",
+              disabled && "pointer-events-none opacity-50",
+            )}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+      {value === "custom" ? (
+        <Input
+          label="Custom days"
+          type="number"
+          min={1}
+          step={1}
+          value={customDays}
+          onChange={(e) => onCustomDays(e.target.value)}
+          required
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function CatalogSection({
+  title,
+  items,
+  loading,
+  selectedId,
+  onSelect,
+  duration,
+  onDuration,
+  customDays,
+  onCustomDays,
+  canSetExpiry,
+  canAssign,
+  busy,
+  onAssign,
+}: {
+  title: string;
+  items: CatalogItem[];
+  loading: boolean;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  duration: AssignDuration;
+  onDuration: (d: AssignDuration) => void;
+  customDays: string;
+  onCustomDays: (v: string) => void;
+  canSetExpiry: boolean;
+  canAssign: boolean;
+  busy: boolean;
+  onAssign: () => void;
+}) {
+  return (
+    <Card title={title}>
+      {loading ? (
+        <LoadingBlock label={`Loading ${title.toLowerCase()}…`} />
+      ) : items.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">No items</p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => {
+            const selected = selectedId === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                disabled={!canAssign || busy}
+                onClick={() => onSelect(item.id)}
+                className={cn(
+                  "btn-press flex flex-col overflow-hidden rounded-xl border text-left transition",
+                  selected
+                    ? "border-primary bg-primary/10 shadow-[0_0_24px_rgba(212,175,55,0.15)]"
+                    : "border-border bg-muted/30 hover:border-primary/40",
+                  (!canAssign || busy) && "opacity-60",
+                )}
+              >
+                <div className="relative aspect-square w-full bg-muted/60">
+                  {item.assetUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.assetUrl}
+                      alt={item.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                      No image
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1 p-3">
+                  <p className="font-medium text-foreground">{item.name}</p>
+                  <p className="text-sm text-primary">{item.price} coins</p>
+                  {!item.isActive ? (
+                    <Badge tone="default">Inactive</Badge>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="mt-4 space-y-3 border-t border-border pt-4">
+        {canSetExpiry ? (
+          <DurationChips
+            value={duration}
+            onChange={onDuration}
+            disabled={!canAssign}
+            showCustom
+            customDays={customDays}
+            onCustomDays={onCustomDays}
+          />
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Duration fixed by catalog defaults (canSetExpiry is off). Assign uses 7
+            days.
+          </p>
+        )}
+        <Button
+          type="button"
+          className="btn-press w-full sm:w-auto"
+          disabled={!canAssign || busy || !selectedId}
+          onClick={onAssign}
+        >
+          {busy && selectedId ? "Assigning…" : "Assign selected"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
 
 export default function ResellerAssignPage() {
   const { reseller } = useResellerAuth();
@@ -24,41 +200,92 @@ export default function ResellerAssignPage() {
   const perms = reseller?.permissions;
   const canSetExpiry = perms?.canSetExpiry ?? false;
   const canRemove = perms?.canRemove ?? false;
+  const showFrames = Boolean(perms?.canAssignFrame);
+  const showEntries = Boolean(perms?.canAssignEntry);
+  const showBadges = Boolean(perms?.canAssignBadge);
 
-  const typeOptions = useMemo(() => {
-    const opts: { value: CatalogType; label: string }[] = [];
-    if (perms?.canAssignFrame) opts.push({ value: "frame", label: "Frame" });
-    if (perms?.canAssignEntry) opts.push({ value: "entry", label: "Entry" });
-    if (perms?.canAssignBadge) opts.push({ value: "badge", label: "Badge" });
-    return opts;
-  }, [perms]);
-
-  const [type, setType] = useState<CatalogType>("frame");
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [publicId, setPublicId] = useState("10000001");
   const [user, setUser] = useState<ResellerUserLookup | null>(null);
-  const [catalogItemId, setCatalogItemId] = useState("");
-  const [duration, setDuration] = useState<AssignDuration>("7");
-  const [customDays, setCustomDays] = useState("14");
+  const [frames, setFrames] = useState<CatalogItem[]>([]);
+  const [entries, setEntries] = useState<CatalogItem[]>([]);
+  const [badges, setBadges] = useState<CatalogItem[]>([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [selected, setSelected] = useState<Record<SectionKey, string | null>>({
+    frame: null,
+    entry: null,
+    badge: null,
+  });
+  const [duration, setDuration] = useState<Record<SectionKey, AssignDuration>>({
+    frame: "7",
+    entry: "7",
+    badge: "7",
+  });
+  const [customDays, setCustomDays] = useState<Record<SectionKey, string>>({
+    frame: "14",
+    entry: "14",
+    badge: "14",
+  });
   const [lastAssignment, setLastAssignment] = useState<AssignedItem | null>(null);
   const [busy, setBusy] = useState(false);
+  const [assigningSection, setAssigningSection] = useState<SectionKey | null>(
+    null,
+  );
+
+  const canAssign = Boolean(user && user.status !== "banned");
 
   useEffect(() => {
-    if (typeOptions.length && !typeOptions.some((t) => t.value === type)) {
-      setType(typeOptions[0].value);
+    let cancelled = false;
+    setLoadingCatalog(true);
+
+    const jobs: Promise<void>[] = [];
+
+    if (showFrames) {
+      jobs.push(
+        resellerApi
+          .catalog({ type: "frame", page: 1, limit: 100 })
+          .then((res) => {
+            if (!cancelled) setFrames(res.items.filter((i) => i.type === "frame"));
+          })
+          .catch((err) => error(err)),
+      );
+    } else {
+      setFrames([]);
     }
-  }, [typeOptions, type]);
 
-  useEffect(() => {
-    if (!typeOptions.length) return;
-    resellerApi
-      .catalog({ type, page: 1, limit: 100 })
-      .then((res) => {
-        setCatalog(res.items);
-        setCatalogItemId(res.items[0]?.id ?? "");
-      })
-      .catch((err) => error(err));
-  }, [type, typeOptions.length, error]);
+    if (showEntries) {
+      jobs.push(
+        resellerApi
+          .catalog({ type: "entry", page: 1, limit: 100 })
+          .then((res) => {
+            if (!cancelled) setEntries(res.items.filter((i) => i.type === "entry"));
+          })
+          .catch((err) => error(err)),
+      );
+    } else {
+      setEntries([]);
+    }
+
+    if (showBadges) {
+      jobs.push(
+        resellerApi
+          .catalog({ type: "badge", page: 1, limit: 100 })
+          .then((res) => {
+            if (!cancelled) setBadges(res.items.filter((i) => i.type === "badge"));
+          })
+          .catch((err) => error(err)),
+      );
+    } else {
+      setBadges([]);
+    }
+
+    void Promise.all(jobs).finally(() => {
+      if (!cancelled) setLoadingCatalog(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showFrames, showEntries, showBadges, error]);
 
   async function lookup(e: FormEvent) {
     e.preventDefault();
@@ -73,30 +300,36 @@ export default function ResellerAssignPage() {
     }
   }
 
-  async function assign(e: FormEvent) {
-    e.preventDefault();
-    if (!user || !catalogItemId) return;
+  async function assignSection(section: SectionKey) {
+    if (!user) return;
+    const catalogItemId = selected[section];
+    if (!catalogItemId) return;
+
+    setAssigningSection(section);
     setBusy(true);
+    const dur = canSetExpiry ? duration[section] : ("7" as AssignDuration);
     const body = {
       publicId: user.publicId,
       catalogItemId,
-      duration: canSetExpiry ? duration : ("7" as AssignDuration),
+      duration: dur,
       customDays:
-        canSetExpiry && duration === "custom"
-          ? Number.parseInt(customDays, 10)
+        canSetExpiry && dur === "custom"
+          ? Number.parseInt(customDays[section], 10)
           : undefined,
     };
+
     try {
       let result: AssignedItem;
-      if (type === "frame") result = await resellerApi.assignFrame(body);
-      else if (type === "entry") result = await resellerApi.assignEntry(body);
+      if (section === "frame") result = await resellerApi.assignFrame(body);
+      else if (section === "entry") result = await resellerApi.assignEntry(body);
       else result = await resellerApi.assignBadge(body);
       setLastAssignment(result);
-      success(`Assigned ${type} · id ${result.id}`);
+      success(`Assigned ${section} · id ${result.id}`);
     } catch (err) {
       error(err);
     } finally {
       setBusy(false);
+      setAssigningSection(null);
     }
   }
 
@@ -114,128 +347,141 @@ export default function ResellerAssignPage() {
     }
   }
 
-  if (!typeOptions.length) {
+  if (!showFrames && !showEntries && !showBadges) {
     return (
-      <PageHeader
+      <EmptyState
         title="Assign items"
-        description="You do not have frame/entry/badge assign permissions."
+        description="You do not have frame, entry, or badge assign permissions."
       />
     );
   }
 
   return (
-    <div>
+    <div className="portal-list space-y-4">
       <PageHeader
         title="Assign items"
-        description="Pick from reseller catalog, then assign by publicId."
+        description="Lookup a user, then tap a frame, entry, or badge card to assign."
       />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="1. Lookup user">
-          <form onSubmit={lookup} className="space-y-3">
-            <Input
-              label="Public ID"
-              value={publicId}
-              onChange={(e) => setPublicId(e.target.value)}
-              required
-            />
-            <Button type="submit" disabled={busy}>
-              Lookup
-            </Button>
-          </form>
-          {user ? (
-            <div className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">User</span>
-                <span>
-                  {user.displayName} (@{user.username})
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
-                <Badge tone={user.status === "banned" ? "danger" : "success"}>
-                  {user.status}
-                </Badge>
-              </div>
-            </div>
-          ) : null}
-        </Card>
 
-        <Card title="2. Assign">
-          <form onSubmit={assign} className="space-y-3">
-            <Select
-              label="Type"
-              value={type}
-              onChange={(e) => setType(e.target.value as CatalogType)}
-              options={typeOptions}
-            />
-            <Select
-              label="Catalog item"
-              value={catalogItemId}
-              onChange={(e) => setCatalogItemId(e.target.value)}
-              options={
-                catalog.length
-                  ? catalog.map((c) => ({
-                      value: c.id,
-                      label: `${c.name} (${c.price} coins)`,
-                    }))
-                  : [{ value: "", label: "No items" }]
-              }
-            />
-            {canSetExpiry ? (
-              <>
-                <Select
-                  label="Duration"
-                  value={duration}
-                  onChange={(e) =>
-                    setDuration(e.target.value as AssignDuration)
-                  }
-                  options={[
-                    { value: "1", label: "1 day" },
-                    { value: "7", label: "7 days" },
-                    { value: "30", label: "30 days" },
-                    { value: "custom", label: "Custom" },
-                    { value: "permanent", label: "Permanent" },
-                  ]}
-                />
-                {duration === "custom" ? (
-                  <Input
-                    label="Custom days"
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={customDays}
-                    onChange={(e) => setCustomDays(e.target.value)}
-                    required
-                  />
+      <Card title="Lookup user">
+        <form onSubmit={lookup} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <Input
+            label="Public ID"
+            value={publicId}
+            onChange={(e) => {
+              setPublicId(e.target.value);
+              setUser(null);
+            }}
+            required
+          />
+          <Button type="submit" className="btn-press" disabled={busy}>
+            {busy && !assigningSection ? "Looking up…" : "Lookup"}
+          </Button>
+        </form>
+        {user ? (
+          <div className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-muted-foreground">User</span>
+              <span>
+                {user.displayName} (@{user.username}) · {user.publicId}
+                {user.isOfficial ? (
+                  <Badge tone="gold" className="ml-2">
+                    Official
+                  </Badge>
                 ) : null}
-              </>
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Status</span>
+              <Badge tone={user.status === "banned" ? "danger" : "success"}>
+                {user.status}
+              </Badge>
+            </div>
+            {user.status === "banned" ? (
+              <p className="text-xs text-danger">Banned users cannot receive items.</p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Expiry is controlled by catalog defaults (canSetExpiry is off).
+                Select an item below and tap Assign.
               </p>
             )}
-            <Button
-              type="submit"
-              disabled={busy || !user || user.status === "banned" || !catalogItemId}
-            >
-              Assign
-            </Button>
-          </form>
-          {lastAssignment && canRemove ? (
-            <div className="mt-4 border-t border-border pt-4">
-              <p className="mb-2 text-sm text-muted-foreground">
-                Last assignment id:{" "}
-                <span className="font-mono text-foreground">
-                  {lastAssignment.id}
-                </span>
-              </p>
-              <Button variant="danger" disabled={busy} onClick={removeLast}>
-                Remove last assignment
-              </Button>
-            </div>
-          ) : null}
+          </div>
+        ) : (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Lookup must succeed before assign is enabled.
+          </p>
+        )}
+      </Card>
+
+      {showFrames ? (
+        <CatalogSection
+          title="Frames"
+          items={frames}
+          loading={loadingCatalog}
+          selectedId={selected.frame}
+          onSelect={(id) => setSelected((s) => ({ ...s, frame: id }))}
+          duration={duration.frame}
+          onDuration={(d) => setDuration((s) => ({ ...s, frame: d }))}
+          customDays={customDays.frame}
+          onCustomDays={(v) => setCustomDays((s) => ({ ...s, frame: v }))}
+          canSetExpiry={canSetExpiry}
+          canAssign={canAssign}
+          busy={busy && assigningSection === "frame"}
+          onAssign={() => void assignSection("frame")}
+        />
+      ) : null}
+
+      {showEntries ? (
+        <CatalogSection
+          title="Entries"
+          items={entries}
+          loading={loadingCatalog}
+          selectedId={selected.entry}
+          onSelect={(id) => setSelected((s) => ({ ...s, entry: id }))}
+          duration={duration.entry}
+          onDuration={(d) => setDuration((s) => ({ ...s, entry: d }))}
+          customDays={customDays.entry}
+          onCustomDays={(v) => setCustomDays((s) => ({ ...s, entry: v }))}
+          canSetExpiry={canSetExpiry}
+          canAssign={canAssign}
+          busy={busy && assigningSection === "entry"}
+          onAssign={() => void assignSection("entry")}
+        />
+      ) : null}
+
+      {showBadges ? (
+        <CatalogSection
+          title="Badges"
+          items={badges}
+          loading={loadingCatalog}
+          selectedId={selected.badge}
+          onSelect={(id) => setSelected((s) => ({ ...s, badge: id }))}
+          duration={duration.badge}
+          onDuration={(d) => setDuration((s) => ({ ...s, badge: d }))}
+          customDays={customDays.badge}
+          onCustomDays={(v) => setCustomDays((s) => ({ ...s, badge: v }))}
+          canSetExpiry={canSetExpiry}
+          canAssign={canAssign}
+          busy={busy && assigningSection === "badge"}
+          onAssign={() => void assignSection("badge")}
+        />
+      ) : null}
+
+      {lastAssignment && canRemove ? (
+        <Card title="Last assignment">
+          <p className="mb-3 text-sm text-muted-foreground">
+            id:{" "}
+            <span className="font-mono text-foreground">{lastAssignment.id}</span>
+          </p>
+          <Button
+            variant="danger"
+            className="btn-press"
+            disabled={busy}
+            onClick={() => void removeLast()}
+          >
+            Remove last assignment
+          </Button>
         </Card>
-      </div>
+      ) : null}
     </div>
   );
 }

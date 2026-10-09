@@ -2,15 +2,16 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LoadingBlock, PageHeader } from "@/components/ui/page";
 import { useToast } from "@/components/ui/toast";
-import { hostApi } from "@/lib/api/app";
+import { appApi, hostApi } from "@/lib/api/app";
 import { ApiError } from "@/lib/api/client";
-import type { LiveRoom } from "@/lib/api/types";
-import { asList } from "@/lib/utils";
+import type { HostProfile, LiveRoom } from "@/lib/api/types";
+import { asList, formatDate } from "@/lib/utils";
 
 function RoomActions({
   room,
@@ -226,15 +227,59 @@ function RoomActions({
 export default function AppRoomsPage() {
   const { error, success } = useToast();
   const [rooms, setRooms] = useState<LiveRoom[]>([]);
+  const [host, setHost] = useState<HostProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
 
+  const liveBanned = Boolean(
+    host?.liveBanned ||
+      (host as HostProfile & { user?: { liveBanned?: boolean } })?.user
+        ?.liveBanned,
+  );
+  const liveBannedUntil =
+    host?.liveBannedUntil ??
+    (
+      host as HostProfile & {
+        user?: { liveBannedUntil?: string | null };
+      }
+    )?.user?.liveBannedUntil ??
+    null;
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await hostApi.listRooms();
+      const [data, dash, me] = await Promise.all([
+        hostApi.listRooms(),
+        hostApi.dashboard().catch(() => null),
+        appApi.me().catch(() => null),
+      ]);
       setRooms(asList(data));
+      if (dash?.host) {
+        setHost({
+          ...dash.host,
+          liveBanned: dash.host.liveBanned ?? me?.liveBanned,
+          liveBannedUntil: dash.host.liveBannedUntil ?? me?.liveBannedUntil,
+        });
+      } else if (me) {
+        setHost((prev) =>
+          prev
+            ? {
+                ...prev,
+                liveBanned: me.liveBanned,
+                liveBannedUntil: me.liveBannedUntil,
+              }
+            : {
+                id: "",
+                userId: me.id,
+                agencyId: null,
+                country: me.country ?? "",
+                status: "active",
+                liveBanned: me.liveBanned,
+                liveBannedUntil: me.liveBannedUntil,
+              },
+        );
+      }
     } catch (err) {
       error(err);
     } finally {
@@ -248,6 +293,14 @@ export default function AppRoomsPage() {
 
   async function createRoom(e: FormEvent) {
     e.preventDefault();
+    if (liveBanned) {
+      error(
+        liveBannedUntil
+          ? `Live streaming is banned until ${formatDate(liveBannedUntil)}`
+          : "Live streaming is banned",
+      );
+      return;
+    }
     setCreating(true);
     try {
       await hostApi.createRoom(title.trim());
@@ -255,7 +308,12 @@ export default function AppRoomsPage() {
       setTitle("");
       await load();
     } catch (err) {
-      error(err);
+      if (err instanceof ApiError && err.statusCode === 403) {
+        error(err.message || "Live streaming is banned");
+        await load();
+      } else {
+        error(err);
+      }
     } finally {
       setCreating(false);
     }
@@ -267,7 +325,20 @@ export default function AppRoomsPage() {
         title="Rooms"
         description="Create rooms and manage wallpaper, staff, kicks, and blacklists."
       />
-      <Card title="New room">
+      {liveBanned ? (
+        <Card className="mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="danger">Live streaming banned</Badge>
+            <span className="text-sm text-muted-foreground">
+              {liveBannedUntil
+                ? `Until ${formatDate(liveBannedUntil)}`
+                : "Permanent"}
+              . Go Live / create room is disabled.
+            </span>
+          </div>
+        </Card>
+      ) : null}
+      <Card title="New room / Go Live">
         <form onSubmit={createRoom} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <Input
             label="Title"
@@ -275,8 +346,9 @@ export default function AppRoomsPage() {
             onChange={(e) => setTitle(e.target.value)}
             className="flex-1"
             required
+            disabled={liveBanned}
           />
-          <Button type="submit" disabled={creating}>
+          <Button type="submit" disabled={creating || liveBanned}>
             {creating ? "Creating…" : "Create room"}
           </Button>
         </form>
