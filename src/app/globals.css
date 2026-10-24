@@ -45,14 +45,44 @@
   }
 
   html {
-    @apply h-full scroll-smooth;
+    @apply min-h-full;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  @media (pointer: fine) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
-    @apply min-h-full bg-background font-sans text-foreground antialiased;
+    @apply min-h-dvh max-w-full bg-background font-sans text-foreground antialiased;
+    overflow-x: clip;
+    overflow-wrap: break-word;
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212, 175, 55, 0.12), transparent),
       radial-gradient(ellipse 60% 40% at 100% 100%, rgba(212, 175, 55, 0.05), transparent);
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  pre {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   ::selection {
@@ -197,7 +227,6 @@
 
   .portal-page-enter {
     opacity: 1;
-    transform: none;
     transition: none;
   }
 }
@@ -227,15 +256,11 @@
 
 .portal-page-enter {
   opacity: 0;
-  transform: translateY(12px);
-  transition:
-    opacity 0.45s ease,
-    transform 0.45s ease;
+  transition: opacity 0.45s ease;
 }
 
 .portal-page-enter-in {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .portal-live-dot {
@@ -306,6 +331,36 @@
   box-shadow: inset 3px 0 0 var(--primary);
 }
 
+.block-row {
+  animation: portal-row-in 0.4s ease both;
+}
+
+.block-flash {
+  animation: block-flash 0.9s ease;
+}
+
+.block-leave {
+  animation: block-leave 0.28s ease forwards;
+}
+
+@keyframes block-flash {
+  0% {
+    background: rgba(225, 29, 46, 0.28);
+    box-shadow: inset 3px 0 0 var(--danger);
+  }
+  100% {
+    background: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+}
+
+@keyframes block-leave {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
 .btn-press {
   transition:
     transform 0.15s ease,
@@ -327,7 +382,10 @@
 
 .portal-table-scroll {
   position: relative;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
@@ -347,7 +405,10 @@
 @media (prefers-reduced-motion: reduce) {
   .portal-row,
   .portal-list,
-  .btn-press {
+  .btn-press,
+  .block-row,
+  .block-flash,
+  .block-leave {
     animation: none !important;
     transition: none !important;
   }

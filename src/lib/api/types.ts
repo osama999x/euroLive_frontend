@@ -376,6 +376,18 @@ export type HostProfile = {
   } | null;
 };
 
+export type BlockedRoomUser = {
+  id: string;
+  userId: string;
+  publicId: string;
+  username: string;
+  displayName: string;
+  isOfficial: boolean;
+  createdAt: string;
+  blacklisted?: boolean;
+  alreadyBlocked?: boolean;
+};
+
 export type LiveRoom = {
   id: string;
   title: string;

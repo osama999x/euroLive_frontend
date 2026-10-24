@@ -154,18 +154,38 @@ export function PortalFrame({
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const y = window.scrollY;
+    const body = document.body;
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${y}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prev;
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, y);
     };
   }, [open]);
 
   const close = () => setOpen(false);
 
   return (
-    <div className="portal-shell flex min-h-screen overflow-x-hidden">
-      <aside className="portal-sidebar sticky top-0 z-20 hidden h-screen w-64 shrink-0 flex-col border-r border-primary/25 bg-sidebar/95 px-3 py-4 backdrop-blur-md lg:flex">
+    <div className="portal-shell flex min-h-dvh w-full max-w-full overflow-x-clip">
+      <aside className="portal-sidebar sticky top-0 z-20 hidden h-dvh w-64 shrink-0 flex-col border-r border-primary/25 bg-sidebar/95 px-3 py-4 backdrop-blur-md lg:flex">
         <SidebarBody
           rootHref={rootHref}
           brandSub={brandSub}
@@ -194,7 +214,7 @@ export function PortalFrame({
         />
         <aside
           className={cn(
-            "portal-sidebar absolute inset-y-0 left-0 flex w-[min(18rem,88vw)] flex-col border-r border-primary/25 bg-sidebar px-3 py-4 shadow-2xl transition-transform duration-200 ease-out",
+            "portal-sidebar absolute inset-y-0 left-0 flex w-[min(18rem,88vw)] max-w-full flex-col border-r border-primary/25 bg-sidebar px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl transition-transform duration-200 ease-out",
             open ? "translate-x-0" : "-translate-x-full",
           )}
         >
@@ -213,7 +233,7 @@ export function PortalFrame({
 
       <div className="relative flex min-w-0 flex-1 flex-col">
         <div className="pointer-events-none absolute inset-0 portal-main-glow" />
-        <header className="portal-topbar sticky top-0 z-30 border-b border-primary/15 bg-background/70 px-3 py-3 backdrop-blur-md sm:px-6">
+        <header className="portal-topbar sticky top-0 z-30 border-b border-primary/15 bg-background/70 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur-md sm:px-6">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <Button
@@ -242,7 +262,7 @@ export function PortalFrame({
             </div>
           </div>
         </header>
-        <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-3 py-4 sm:px-6 sm:py-6">
+        <main className="relative z-10 mx-auto w-full min-w-0 max-w-6xl flex-1 px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6">
           <PortalPageEnter>{children}</PortalPageEnter>
         </main>
       </div>

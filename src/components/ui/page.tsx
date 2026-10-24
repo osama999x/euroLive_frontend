@@ -66,7 +66,7 @@ export function PageHeader({
   return (
     <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="font-display text-2xl font-semibold text-gold-gradient sm:text-3xl">
+        <h1 className="font-display text-2xl font-semibold break-words text-gold-gradient sm:text-3xl">
           {title}
         </h1>
         {description ? (

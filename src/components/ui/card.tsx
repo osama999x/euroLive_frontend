@@ -14,7 +14,7 @@ export function Card({ children, className, title, description, action }: CardPr
   return (
     <section
       className={cn(
-        "rounded-xl border border-primary/20 bg-card/90 p-4 shadow-[0_0_40px_rgba(0,0,0,0.35)] transition duration-300 hover:border-primary/40 hover:shadow-[0_0_48px_rgba(212,175,55,0.12)] sm:p-5",
+        "min-w-0 max-w-full rounded-xl border border-primary/20 bg-card/90 p-4 shadow-[0_0_40px_rgba(0,0,0,0.35)] transition duration-300 hover:border-primary/40 hover:shadow-[0_0_48px_rgba(212,175,55,0.12)] sm:p-5",
         className,
       )}
     >

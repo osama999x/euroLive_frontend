@@ -7,7 +7,7 @@ import { SiteFooter, SiteHeader } from "@/components/landing/site-shell";
 
 export default function HomePage() {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex min-h-dvh w-full max-w-full flex-col overflow-x-clip">
       <SiteHeader />
       <main className="flex-1">
         <LandingHero />

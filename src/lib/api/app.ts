@@ -3,6 +3,7 @@ import type {
   AppUser,
   Complaint,
   DeviceRecord,
+  BlockedRoomUser,
   HostProfile,
   HostSalaryView,
   LiveRoom,
@@ -122,19 +123,28 @@ export const hostApi = {
     });
   },
 
-  blacklist(roomId: string, body: { userId: string; reason?: string }) {
-    return apiFetch<unknown>(`/host/rooms/${roomId}/blacklist`, {
+  listBlacklist(roomId: string) {
+    return apiFetch<BlockedRoomUser[]>(`/host/rooms/${roomId}/blacklist`, {
+      portal: "app",
+    });
+  },
+
+  blacklist(roomId: string, userId: string) {
+    return apiFetch<BlockedRoomUser>(`/host/rooms/${roomId}/blacklist`, {
       method: "POST",
       portal: "app",
-      body: JSON.stringify(body),
+      body: JSON.stringify({ userId }),
     });
   },
 
   unblacklist(roomId: string, userId: string) {
-    return apiFetch<unknown>(`/host/rooms/${roomId}/blacklist/${userId}`, {
-      method: "DELETE",
-      portal: "app",
-    });
+    return apiFetch<{ removed: true; userId: string }>(
+      `/host/rooms/${roomId}/blacklist/${encodeURIComponent(userId)}`,
+      {
+        method: "DELETE",
+        portal: "app",
+      },
+    );
   },
 
   createComplaint(body: Record<string, unknown>) {

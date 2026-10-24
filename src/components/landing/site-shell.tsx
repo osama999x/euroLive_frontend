@@ -9,9 +9,9 @@ import { cn } from "@/lib/utils";
 
 export function SiteHeader({ activeHref }: { activeHref?: string }) {
   return (
-    <header className="relative z-20 border-b border-primary/10">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <BrandLogo size="sm" showWordmark />
+    <header className="relative z-20 border-b border-primary/10 pt-[env(safe-area-inset-top)]">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
+        <BrandLogo size="sm" showWordmark className="min-w-0" />
         <nav className="hidden items-center gap-1 md:flex">
           {siteNav.map((item) => (
             <Link
@@ -28,9 +28,9 @@ export function SiteHeader({ activeHref }: { activeHref?: string }) {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Link href="/admin/login">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="px-2 sm:px-3">
               Admin
             </Button>
           </Link>
@@ -45,13 +45,13 @@ export function SiteHeader({ activeHref }: { activeHref?: string }) {
             </Button>
           </Link>
           <Link href="/reseller/login">
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" className="px-2 sm:px-3">
               Reseller
             </Button>
           </Link>
         </div>
       </div>
-      <nav className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-4 pb-3 md:hidden sm:px-6">
+      <nav className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 pb-3 md:hidden sm:px-6">
         {siteNav.map((item) => (
           <Link
             key={item.href}
@@ -73,7 +73,7 @@ export function SiteHeader({ activeHref }: { activeHref?: string }) {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-primary/20 px-4 py-12 sm:px-6">
+    <footer className="border-t border-primary/20 px-4 pt-12 pb-[max(3rem,env(safe-area-inset-bottom))] sm:px-6">
       <div className="mx-auto flex max-w-5xl flex-col gap-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -163,7 +163,7 @@ export function SitePage({
   children: ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex min-h-dvh w-full max-w-full flex-col overflow-x-clip">
       <SiteHeader activeHref={activeHref} />
       <main className="flex-1">{children}</main>
       <SiteFooter />

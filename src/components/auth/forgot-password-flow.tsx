@@ -256,7 +256,7 @@ export function ForgotPasswordFlow({ portal }: ForgotPasswordFlowProps) {
   const seconds = otpSecondsLeft % 60;
 
   return (
-    <div className="portal-login relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
+    <div className="portal-login relative flex min-h-dvh w-full max-w-full items-start justify-center overflow-x-clip overflow-y-auto px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] sm:items-center">
       <div className="pointer-events-none absolute inset-0 landing-hero-glow" />
       <div className="portal-login-card relative z-10 w-full max-w-md rounded-2xl border border-primary/30 bg-card/90 p-6 shadow-[0_0_60px_rgba(212,175,55,0.12)] backdrop-blur-md sm:p-8">
         <div className="mb-2 text-center">

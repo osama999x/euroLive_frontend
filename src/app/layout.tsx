@@ -40,9 +40,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} min-h-full`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-dvh w-full max-w-full flex-col">
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
