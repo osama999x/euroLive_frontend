@@ -79,6 +79,20 @@ export default function AgencyDetailPage() {
     }
   }
 
+  async function unfreeze() {
+    setBusy(true);
+    try {
+      const next = await adminApi.unfreezeAgency(params.id);
+      setAgency(next);
+      setForm((prev) => ({ ...prev, status: next.status }));
+      success("Agency unfrozen");
+    } catch (err) {
+      error(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submitFreeze(e: FormEvent) {
     e.preventDefault();
     if (!freezeReason.trim()) return;
@@ -111,6 +125,16 @@ export default function AgencyDetailPage() {
             {master ? (
               <Button variant="danger" onClick={() => setFreezeOpen(true)} disabled={busy}>
                 Freeze (Master)
+              </Button>
+            ) : null}
+            {master ? (
+              <Button
+                variant="secondary"
+                className="btn-press"
+                disabled={busy || (agency.status !== "frozen" && !agency.frozen)}
+                onClick={() => void unfreeze()}
+              >
+                Unfreeze
               </Button>
             ) : null}
           </div>

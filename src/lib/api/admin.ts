@@ -422,6 +422,13 @@ export const adminApi = {
     });
   },
 
+  unfreezeAgency(id: string) {
+    return apiFetch<import("@/lib/api/types").Agency>(
+      `/admin/agencies/${id}/unfreeze`,
+      { method: "POST", portal: "admin" },
+    );
+  },
+
   listHosts(query: { page?: number; limit?: number; agencyId?: string; country?: string }) {
     return apiFetch<Paginated<import("@/lib/api/types").HostProfile>>(
       "/admin/hosts",
@@ -472,6 +479,27 @@ export const adminApi = {
       portal: "admin",
       body: JSON.stringify({ reason }),
     });
+  },
+
+  unfreezeHost(id: string) {
+    return apiFetch<import("@/lib/api/types").HostProfile>(
+      `/admin/hosts/${id}/unfreeze`,
+      { method: "POST", portal: "admin" },
+    );
+  },
+
+  banHostLive(id: string) {
+    return apiFetch<import("@/lib/api/types").HostProfile & { alreadyBanned?: boolean }>(
+      `/admin/hosts/${id}/live-ban`,
+      { method: "POST", portal: "admin" },
+    );
+  },
+
+  unbanHostLive(id: string) {
+    return apiFetch<import("@/lib/api/types").HostProfile & { alreadyClear?: boolean }>(
+      `/admin/hosts/${id}/live-unban`,
+      { method: "POST", portal: "admin" },
+    );
   },
 
   postHostHours(

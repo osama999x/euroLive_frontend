@@ -14,13 +14,14 @@ import { useToast } from "@/components/ui/toast";
 import { adminApi } from "@/lib/api/admin";
 import type { HostProfile, HostStatus } from "@/lib/api/types";
 import { useAdminAuth } from "@/lib/auth/admin-store";
-import { isMaster } from "@/lib/auth/roles";
+import { isMaster, staffHasRole } from "@/lib/auth/roles";
 import { formatDate, isNotFoundError } from "@/lib/utils";
 
 export default function HostDetailPage() {
   const params = useParams<{ id: string }>();
   const { staff } = useAdminAuth();
   const master = isMaster(staff?.roles);
+  const canModerate = staffHasRole(staff?.roles, ["admin", "moderator"]);
   const { error, success, toast } = useToast();
   const [host, setHost] = useState<HostProfile | null>(null);
   const [busy, setBusy] = useState(false);
@@ -110,6 +111,46 @@ export default function HostDetailPage() {
     }
   }
 
+  async function unfreeze() {
+    setBusy(true);
+    try {
+      const next = await adminApi.unfreezeHost(params.id);
+      setHost(next);
+      setProfile((prev) => ({ ...prev, status: next.status }));
+      success("Host unfrozen");
+    } catch (err) {
+      error(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function banLive() {
+    setBusy(true);
+    try {
+      const next = await adminApi.banHostLive(params.id);
+      setHost(next);
+      success(next.alreadyBanned ? "Already banned from live" : "Banned from going live");
+    } catch (err) {
+      error(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function unbanLive() {
+    setBusy(true);
+    try {
+      const next = await adminApi.unbanHostLive(params.id);
+      setHost(next);
+      success(next.alreadyClear ? "Live access is already open" : "Live ban lifted");
+    } catch (err) {
+      error(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submitFreeze(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -174,12 +215,50 @@ export default function HostDetailPage() {
                 Freeze
               </Button>
             ) : null}
+            {master ? (
+              <Button
+                variant="secondary"
+                className="btn-press"
+                disabled={busy || host.status !== "frozen"}
+                onClick={() => void unfreeze()}
+              >
+                Unfreeze
+              </Button>
+            ) : null}
+            {canModerate ? (
+              <Button
+                variant="danger"
+                className="btn-press"
+                disabled={busy || Boolean(host.liveBanned)}
+                onClick={() => void banLive()}
+              >
+                Ban live
+              </Button>
+            ) : null}
+            {canModerate ? (
+              <Button
+                variant="secondary"
+                className="btn-press"
+                disabled={busy || !host.liveBanned}
+                onClick={() => void unbanLive()}
+              >
+                Unban live
+              </Button>
+            ) : null}
           </div>
         }
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Badge tone={host.status === "active" ? "success" : "danger"}>{host.status}</Badge>
+        {host.liveBanned ? (
+          <Badge tone="danger">
+            Live banned
+            {host.liveBannedUntil ? ` · until ${formatDate(host.liveBannedUntil)}` : ""}
+          </Badge>
+        ) : (
+          <Badge tone="success">Live open</Badge>
+        )}
         {host.protectionLocked ? (
           <Badge tone="gold">
             Protection lock

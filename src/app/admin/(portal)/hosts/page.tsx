@@ -12,10 +12,16 @@ import { EmptyState, LoadingBlock, PageHeader } from "@/components/ui/page";
 import { useToast } from "@/components/ui/toast";
 import { adminApi } from "@/lib/api/admin";
 import type { HostProfile, PaginationMeta } from "@/lib/api/types";
-import { formatDate, isNotFoundError } from "@/lib/utils";
+import { useAdminAuth } from "@/lib/auth/admin-store";
+import { isMaster, staffHasRole } from "@/lib/auth/roles";
+import { isNotFoundError } from "@/lib/utils";
 
 function HostsList() {
+  const { staff } = useAdminAuth();
+  const master = isMaster(staff?.roles);
+  const canModerate = staffHasRole(staff?.roles, ["admin", "moderator"]);
   const { error, success, toast } = useToast();
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
   const [items, setItems] = useState<HostProfile[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [page, setPage] = useState(1);
@@ -57,6 +63,31 @@ function HostsList() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function runRow(
+    id: string,
+    action: () => Promise<
+      { alreadyBanned?: boolean; alreadyClear?: boolean } | HostProfile | void
+    >,
+    ok: string,
+  ) {
+    setRowBusy(id);
+    try {
+      const result = await action();
+      if (result && "alreadyBanned" in result && result.alreadyBanned) {
+        success("Already banned from live");
+      } else if (result && "alreadyClear" in result && result.alreadyClear) {
+        success("Live access is already open");
+      } else {
+        success(ok);
+      }
+      await load();
+    } catch (err) {
+      error(err);
+    } finally {
+      setRowBusy(null);
+    }
+  }
 
   async function onCreate(e: FormEvent) {
     e.preventDefault();
@@ -139,13 +170,14 @@ function HostsList() {
       ) : (
         <Card>
           <div className="portal-table-scroll">
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <table className="w-full min-w-[920px] text-left text-sm">
               <thead className="border-b border-border text-muted-foreground">
                 <tr>
                   <th className="px-2 py-2 font-medium">Host</th>
                   <th className="px-2 py-2 font-medium">Agency</th>
                   <th className="px-2 py-2 font-medium">Country</th>
                   <th className="px-2 py-2 font-medium">Status</th>
+                  <th className="px-2 py-2 font-medium">Live</th>
                   <th className="px-2 py-2 font-medium">Protection</th>
                   <th className="px-2 py-2 font-medium" />
                 </tr>
@@ -171,6 +203,11 @@ function HostsList() {
                       </Badge>
                     </td>
                     <td className="px-2 py-3">
+                      <Badge tone={h.liveBanned ? "danger" : "success"}>
+                        {h.liveBanned ? "Banned" : "Open"}
+                      </Badge>
+                    </td>
+                    <td className="px-2 py-3">
                       {h.protectionLocked ? (
                         <Badge tone="gold">Locked</Badge>
                       ) : (
@@ -178,11 +215,64 @@ function HostsList() {
                       )}
                     </td>
                     <td className="px-2 py-3 text-right">
-                      <Link href={`/admin/hosts/${h.id}`}>
-                        <Button size="sm" variant="secondary" className="btn-press">
-                          Open
-                        </Button>
-                      </Link>
+                      <div className="flex flex-wrap justify-end gap-1">
+                        {canModerate ? (
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            className="btn-press"
+                            disabled={rowBusy === h.id || Boolean(h.liveBanned)}
+                            onClick={() =>
+                              void runRow(
+                                h.id,
+                                () => adminApi.banHostLive(h.id),
+                                "Banned from going live",
+                              )
+                            }
+                          >
+                            Ban live
+                          </Button>
+                        ) : null}
+                        {canModerate ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="btn-press"
+                            disabled={rowBusy === h.id || !h.liveBanned}
+                            onClick={() =>
+                              void runRow(
+                                h.id,
+                                () => adminApi.unbanHostLive(h.id),
+                                "Live ban lifted",
+                              )
+                            }
+                          >
+                            Unban
+                          </Button>
+                        ) : null}
+                        {master && h.status === "frozen" ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="btn-press"
+                            disabled={rowBusy === h.id}
+                            onClick={() =>
+                              void runRow(
+                                h.id,
+                                () => adminApi.unfreezeHost(h.id),
+                                "Host unfrozen",
+                              )
+                            }
+                          >
+                            Unfreeze
+                          </Button>
+                        ) : null}
+                        <Link href={`/admin/hosts/${h.id}`}>
+                          <Button size="sm" variant="secondary" className="btn-press">
+                            Open
+                          </Button>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

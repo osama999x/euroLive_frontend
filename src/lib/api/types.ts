@@ -332,6 +332,7 @@ export type Agency = {
   displayName: string;
   country: CountryCode | string;
   status: AgencyStatus;
+  frozen?: boolean;
   sharePercent?: number;
   createdAt?: string;
   updatedAt?: string;
