@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Card, StatCard } from "@/components/ui/card";
 import { LoadingBlock, PageHeader } from "@/components/ui/page";
 import { useToast } from "@/components/ui/toast";
@@ -61,6 +62,25 @@ export default function ResellerDashboardPage() {
           <div>
             <dt className="text-muted-foreground">Status</dt>
             <dd className="capitalize">{data.reseller.status}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-muted-foreground">Official user</dt>
+            <dd className="mt-1">
+              {data.reseller.officialUser ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="gold">Official</Badge>
+                  <span>
+                    {data.reseller.officialUser.displayName} · @
+                    {data.reseller.officialUser.username}
+                  </span>
+                  <span className="font-mono text-primary">
+                    {data.reseller.officialUser.officialId}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">None assigned</span>
+              )}
+            </dd>
           </div>
         </dl>
       </Card>

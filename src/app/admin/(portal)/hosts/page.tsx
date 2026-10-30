@@ -169,7 +169,95 @@ function HostsList() {
         <EmptyState title="No hosts found" />
       ) : (
         <Card>
-          <div className="portal-table-scroll">
+          <ul className="space-y-3 md:hidden">
+            {items.map((h) => (
+              <li
+                key={h.id}
+                className="rounded-xl border border-border/70 bg-muted/20 p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">
+                      {h.user?.displayName ?? h.userId.slice(0, 8)}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {h.user ? `@${h.user.username}` : h.userId}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {h.agency?.displayName ?? "No agency"} · {h.country}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <Badge tone={h.status === "active" ? "success" : "danger"}>
+                      {h.status}
+                    </Badge>
+                    <Badge tone={h.liveBanned ? "danger" : "success"}>
+                      {h.liveBanned ? "Live banned" : "Live open"}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {canModerate ? (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      className="btn-press"
+                      disabled={rowBusy === h.id || Boolean(h.liveBanned)}
+                      onClick={() =>
+                        void runRow(
+                          h.id,
+                          () => adminApi.banHostLive(h.id),
+                          "Banned from going live",
+                        )
+                      }
+                    >
+                      Ban live
+                    </Button>
+                  ) : null}
+                  {canModerate ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="btn-press"
+                      disabled={rowBusy === h.id || !h.liveBanned}
+                      onClick={() =>
+                        void runRow(
+                          h.id,
+                          () => adminApi.unbanHostLive(h.id),
+                          "Live ban lifted",
+                        )
+                      }
+                    >
+                      Unban
+                    </Button>
+                  ) : null}
+                  {master && h.status === "frozen" ? (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="btn-press"
+                      disabled={rowBusy === h.id}
+                      onClick={() =>
+                        void runRow(
+                          h.id,
+                          () => adminApi.unfreezeHost(h.id),
+                          "Host unfrozen",
+                        )
+                      }
+                    >
+                      Unfreeze
+                    </Button>
+                  ) : null}
+                  <Link href={`/admin/hosts/${h.id}`}>
+                    <Button size="sm" variant="secondary" className="btn-press">
+                      Open
+                    </Button>
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="portal-table-scroll hidden md:block">
             <table className="w-full min-w-[920px] text-left text-sm">
               <thead className="border-b border-border text-muted-foreground">
                 <tr>

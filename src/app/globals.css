@@ -47,7 +47,7 @@
   html {
     @apply min-h-full;
     max-width: 100%;
-    overflow-x: clip;
+    overflow-x: hidden;
   }
 
   @media (pointer: fine) {
@@ -58,7 +58,7 @@
 
   body {
     @apply min-h-dvh max-w-full bg-background font-sans text-foreground antialiased;
-    overflow-x: clip;
+    overflow-x: hidden;
     overflow-wrap: break-word;
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212, 175, 55, 0.12), transparent),
@@ -227,6 +227,7 @@
 
   .portal-page-enter {
     opacity: 1;
+    transform: none;
     transition: none;
   }
 }
@@ -256,11 +257,21 @@
 
 .portal-page-enter {
   opacity: 0;
-  transition: opacity 0.45s ease;
+  transform: translateY(10px);
+  transition:
+    opacity 0.4s ease,
+    transform 0.45s ease;
 }
 
 .portal-page-enter-in {
   opacity: 1;
+  transform: translateY(0);
+}
+
+.portal-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
 }
 
 .portal-live-dot {
@@ -385,10 +396,10 @@
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;
-  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
+  touch-action: pan-x pan-y;
 }
 
 @keyframes portal-row-in {

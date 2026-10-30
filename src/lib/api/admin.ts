@@ -215,6 +215,24 @@ export const adminApi = {
     });
   },
 
+  assignResellerOfficial(
+    id: string,
+    body: { userKey: string; officialId?: string },
+  ) {
+    return apiFetch<Reseller>(`/admin/resellers/${id}/official`, {
+      method: "PATCH",
+      portal: "admin",
+      body: JSON.stringify(body),
+    });
+  },
+
+  clearResellerOfficial(id: string) {
+    return apiFetch<Reseller>(`/admin/resellers/${id}/official`, {
+      method: "DELETE",
+      portal: "admin",
+    });
+  },
+
   adjustResellerBalance(
     id: string,
     body: {

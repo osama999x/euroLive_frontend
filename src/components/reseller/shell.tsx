@@ -58,7 +58,12 @@ export function ResellerShell({ children }: { children: ReactNode }) {
             {reseller.isOfficial ? " · Official" : ""}
           </p>
           <p className="truncate text-xs text-primary">{reseller.email}</p>
-          {reseller.isOfficial && reseller.officialId ? (
+          {reseller.officialUser ? (
+            <p className="truncate text-[10px] text-primary">
+              Official · {reseller.officialUser.displayName} ·{" "}
+              {reseller.officialUser.officialId}
+            </p>
+          ) : reseller.isOfficial && reseller.officialId ? (
             <p className="truncate text-[10px] text-muted-foreground">
               ID {reseller.officialId}
             </p>

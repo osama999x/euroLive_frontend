@@ -161,6 +161,26 @@ export default function AgencyDetailPage() {
               <dd className="truncate font-mono text-xs">{agency.id}</dd>
             </div>
           </dl>
+          {master ? (
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-border/60 pt-4">
+              <Button
+                variant="danger"
+                className="btn-press"
+                disabled={busy}
+                onClick={() => setFreezeOpen(true)}
+              >
+                Freeze
+              </Button>
+              <Button
+                variant={agency.status === "frozen" || agency.frozen ? "primary" : "secondary"}
+                className="btn-press"
+                disabled={busy || (agency.status !== "frozen" && !agency.frozen)}
+                onClick={() => void unfreeze()}
+              >
+                Unfreeze
+              </Button>
+            </div>
+          ) : null}
         </Card>
 
         <Card title="Edit agency">

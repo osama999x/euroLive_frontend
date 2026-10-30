@@ -36,6 +36,10 @@ export default function ResellerDetailPage() {
     note: "",
   });
   const [perms, setPerms] = useState<ResellerPermissions | null>(null);
+  const [officialForm, setOfficialForm] = useState({
+    userKey: "",
+    officialId: "",
+  });
 
   const load = useCallback(() => {
     adminApi
@@ -56,6 +60,38 @@ export default function ResellerDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function saveOfficial(e: FormEvent) {
+    e.preventDefault();
+    if (!officialForm.userKey.trim()) return;
+    setBusy(true);
+    try {
+      const next = await adminApi.assignResellerOfficial(params.id, {
+        userKey: officialForm.userKey.trim(),
+        officialId: officialForm.officialId.trim() || undefined,
+      });
+      setReseller(next);
+      setOfficialForm({ userKey: "", officialId: "" });
+      success("Official user assigned");
+    } catch (err) {
+      error(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function clearOfficial() {
+    setBusy(true);
+    try {
+      const next = await adminApi.clearResellerOfficial(params.id);
+      setReseller(next);
+      success("Official user removed");
+    } catch (err) {
+      error(err);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function saveProfile(e: FormEvent) {
     e.preventDefault();
@@ -170,6 +206,64 @@ export default function ResellerDetailPage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <Card
+          className="lg:col-span-2"
+          title="Official user"
+          description="Attach one user to this reseller. The official ID is theirs, and it shows with this reseller."
+        >
+          {reseller.officialUser ? (
+            <div className="mb-4 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="gold">Official</Badge>
+                  <span className="font-medium">{reseller.officialUser.displayName}</span>
+                </div>
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                  @{reseller.officialUser.username} · {reseller.officialUser.publicId}
+                </p>
+                <p className="mt-1 truncate font-mono text-sm text-primary">
+                  {reseller.officialUser.officialId || reseller.officialId}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="btn-press shrink-0"
+                disabled={busy}
+                onClick={() => void clearOfficial()}
+              >
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <p className="mb-3 text-sm text-muted-foreground">No official user on this reseller yet.</p>
+          )}
+          <form onSubmit={saveOfficial} className="grid gap-3 sm:grid-cols-2">
+            <Input
+              label="User ID"
+              value={officialForm.userKey}
+              placeholder="Public ID, username, or account ID"
+              onChange={(e) =>
+                setOfficialForm({ ...officialForm, userKey: e.target.value })
+              }
+              required
+            />
+            <Input
+              label="Official ID"
+              value={officialForm.officialId}
+              placeholder="Leave blank to use their public ID"
+              onChange={(e) =>
+                setOfficialForm({ ...officialForm, officialId: e.target.value })
+              }
+            />
+            <div className="sm:col-span-2">
+              <Button type="submit" className="btn-press" disabled={busy}>
+                Assign official
+              </Button>
+            </div>
+          </form>
+        </Card>
+
         <Card title="Profile">
           <form onSubmit={saveProfile} className="space-y-3">
             <Input

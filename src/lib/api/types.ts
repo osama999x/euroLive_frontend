@@ -107,6 +107,15 @@ export type ResellerPermissions = {
   dailyBadgeLimit: number | null;
 };
 
+export type OfficialResellerUser = {
+  id: string;
+  publicId: string;
+  username: string;
+  displayName: string;
+  officialId: string | null;
+  isOfficial: boolean;
+};
+
 export type Reseller = {
   id: string;
   email: string;
@@ -118,6 +127,8 @@ export type Reseller = {
   permissions: ResellerPermissions;
   isOfficial?: boolean;
   officialId?: string | null;
+  officialUserId?: string | null;
+  officialUser?: OfficialResellerUser | null;
   createdAt: string;
   updatedAt: string;
 };

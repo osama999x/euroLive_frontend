@@ -161,6 +161,12 @@ function ResellersList() {
                       <div className="text-xs text-muted-foreground">
                         {r.email} · @{r.username}
                       </div>
+                      {r.officialUser ? (
+                        <div className="mt-1 text-xs text-primary">
+                          Official · {r.officialUser.displayName} ·{" "}
+                          {r.officialUser.officialId}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-2 py-3">{r.creditLimit}</td>
                     <td className="px-2 py-3">{r.commissionRate}%</td>
